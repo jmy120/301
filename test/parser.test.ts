@@ -1,0 +1,21 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import { parseSysmlXml } from '../src/parser.js';
+
+test('parses elements, relations, diagrams and views', async () => {
+  const xml = await readFile(new URL('../examples/sample.sysml.xml', import.meta.url), 'utf8');
+  const result = parseSysmlXml(xml, 'sample.sysml.xml');
+  assert.equal(result.statistics.elements, 4);
+  assert.equal(result.statistics.relations, 1);
+  assert.equal(result.statistics.diagrams, 1);
+  assert.equal(result.statistics.views, 1);
+  assert.equal(result.relations[0].sourceId, 'port-1');
+  assert.equal(result.diagrams[0].viewIds[0], 'view-1');
+  assert.equal(result.issues.filter(x => x.code === 'DANGLING_REFERENCE').length, 0);
+});
+
+test('reports unresolved references', () => {
+  const result = parseSysmlXml('<xmi:XMI><node xmi:id="a" xmi:type="Connector" source="missing" /></xmi:XMI>');
+  assert.equal(result.statistics.danglingReferences, 1);
+});

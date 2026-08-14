@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xmi:XMI xmlns:xmi="http://www.omg.org/spec/XMI/20131001" xmi:version="2.5" productVersion="MagicDraw 2024x">
+  <uml:Model xmlns:uml="http://www.eclipse.org/uml2/5.0.0/UML" xmi:id="model-1" name="VehicleModel">
+    <packagedElement xmi:type="Package" xmi:id="pkg-1" name="Structure">
+      <packagedElement xmi:type="Block" xmi:id="block-1" name="Vehicle" />
+      <packagedElement xmi:type="Port" xmi:id="port-1" name="powerIn" type="block-1" />
+      <packagedElement xmi:type="Connector" xmi:id="connector-1" source="port-1" target="block-1" />
+    </packagedElement>
+    <ownedDiagram xmi:type="Diagram" xmi:id="diagram-1" name="Vehicle BDD" diagramType="Block Definition Diagram">
+      <ownedDiagramElement xmi:type="Shape" xmi:id="view-1" modelElement="block-1" bounds="100,80,180,90" />
+    </ownedDiagram>
+  </uml:Model>
+</xmi:XMI>
