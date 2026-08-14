@@ -2,7 +2,7 @@ import { XMLParser, XMLValidator } from 'fast-xml-parser';
 import { attribute, isDiagram, isRelation, isView, localName, metaClass, normalizedType } from './adapter.js';
 import type { Diagram, Issue, ModelElement, ParsedModel, Relation, View } from './types.js';
 
-type RawNode = { id: string; tag: string; attrs: Record<string, string>; path: string; parentId?: string; diagramId?: string };
+type RawNode = { id: string; tag: string; attrs: Record<string, string>; path: string; parentId?: string; diagramId?: string; filePartName?: string; text?: string };
 const idNames = ['xmi:id', 'id', 'ID'];
 const referenceTags = new Set(['annotatedElement', 'client', 'supplier', 'source', 'target', 'memberEnd', 'ownedEnd', 'constrainedElement', 'elementID', 'usedObjects']);
 const structuralTags = new Set(['packagedElement', 'ownedElement', 'ownedAttribute', 'ownedRule', 'nestedClassifier', 'ownedBehavior', 'ownedParameter', 'region', 'subvertex', 'transition', 'ownedMember']);
@@ -17,7 +17,7 @@ export function parseSysmlXml(xml: string, fileName = 'model.xml'): ParsedModel 
   const diagrams = new Map<string, Diagram>(); const views = new Map<string, View>(); const raw: RawNode[] = [];
   const duplicateIds = new Set<string>(); let generated = 0; let rootTag = '';
 
-  const visit = (nodes: unknown[], path: string, parentId?: string, diagramId?: string, semanticAllowed = true): void => {
+  const visit = (nodes: unknown[], path: string, parentId?: string, diagramId?: string, semanticAllowed = true, filePartName?: string): void => {
     for (const item of nodes) {
       if (!item || typeof item !== 'object') continue;
       for (const [tag, value] of Object.entries(item as Record<string, unknown>)) {
@@ -28,9 +28,11 @@ export function parseSysmlXml(xml: string, fileName = 'model.xml'): ParsedModel 
         const explicitId = attribute(attrs, ...idNames);
         const id = explicitId ?? `generated-${++generated}`;
         const type = metaClass(tag, attrs);
-        const node: RawNode = { id, tag, attrs, path: nodePath, parentId, diagramId };
-        const currentDiagramId = isDiagram(type, tag, attrs) ? id : diagramId;
         const tagName = localName(tag);
+        const currentFilePart = tagName === 'filePart' ? attribute(attrs, 'name') : filePartName;
+        const text = Array.isArray(value) ? (value.find(x => x && typeof x === 'object' && '#text' in x) as Record<string, string> | undefined)?.['#text'] : undefined;
+        const node: RawNode = { id, tag, attrs, path: nodePath, parentId, diagramId, filePartName: currentFilePart, text };
+        const currentDiagramId = isDiagram(type, tag, attrs) ? id : diagramId;
         const isReference = Boolean(attribute(attrs, 'xmi:idref', 'href')) || referenceTags.has(tagName);
         const normalized = normalizedType(type);
         const isSemantic = semanticAllowed && Boolean(explicitId) && !isReference && (type.startsWith('uml:') || type.startsWith('sysml:') || structuralTags.has(tagName) || isRelation(type, tag) || ['Model', 'Package'].includes(normalized));
@@ -47,7 +49,7 @@ export function parseSysmlXml(xml: string, fileName = 'model.xml'): ParsedModel 
         raw.push(node);
         const child = Array.isArray(value) ? value : [];
         // filePart may contain MagicDraw installation profiles/projects. They are not part of the exported user model.
-        visit(child, nodePath, id, currentDiagramId, semanticAllowed && tagName !== 'filePart');
+        visit(child, nodePath, id, currentDiagramId, semanticAllowed && tagName !== 'filePart', currentFilePart);
       }
     }
   };
@@ -65,6 +67,27 @@ export function parseSysmlXml(xml: string, fileName = 'model.xml'): ParsedModel 
       case 'supplier': case 'target': relation.targetId ??= ref; break;
       case 'memberEnd': case 'ownedEnd': relation.endIds.push(ref); break;
     }
+  }
+  // MagicDraw stores each diagram's drawing in a separate filePart whose name is streamContentID.
+  const rawById = new Map(raw.map(node => [node.id, node]));
+  const childrenByParent = new Map<string, RawNode[]>();
+  for (const node of raw) if (node.parentId) (childrenByParent.get(node.parentId) ?? childrenByParent.set(node.parentId, []).get(node.parentId)!).push(node);
+  const diagramByStream = new Map<string, string>();
+  for (const node of raw.filter(node => localName(node.tag) === 'binaryObject')) {
+    let ancestor: RawNode | undefined = node;
+    while (ancestor?.parentId) {
+      ancestor = rawById.get(ancestor.parentId);
+      if (ancestor && diagrams.has(ancestor.id)) { const stream = attribute(node.attrs, 'streamContentID'); if (stream) diagramByStream.set(stream, ancestor.id); break; }
+    }
+  }
+  for (const node of raw.filter(node => localName(node.tag) === 'mdElement' && node.filePartName && diagramByStream.has(node.filePartName))) {
+    const children = childrenByParent.get(node.id) ?? [];
+    const modelRef = children.find(child => localName(child.tag) === 'elementID')?.attrs['xmi:idref'];
+    if (!modelRef) continue;
+    const geometry = children.find(child => localName(child.tag) === 'geometry')?.text;
+    const diagramId = diagramByStream.get(node.filePartName!);
+    if (!diagramId) continue;
+    views.set(node.id, { id: node.id, diagramId, modelElementId: modelRef, kind: attribute(node.attrs, 'elementClass') ?? 'mdElement', bounds: geometry, style: node.attrs, sourceXPath: node.path });
   }
   // SysML stereotypes are separate application nodes; attach them to their UML base element.
   for (const node of raw) {

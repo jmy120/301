@@ -11,5 +11,8 @@ test('adapts MagicDraw 2026 XMI semantic model and diagrams', async () => {
   assert.ok(result.elements.some(x => x.stereotypes.includes('Block')));
   assert.ok(result.diagrams.length > 0);
   assert.ok(result.relations.some(x => x.kind === 'uml:Dependency' && x.sourceId && x.targetId));
+  assert.ok(result.views.length > 100);
+  assert.ok(result.views.some(x => x.bounds && x.modelElementId));
+  assert.ok(result.diagrams.some(x => x.viewIds.length > 0));
   assert.equal(result.statistics.duplicateIds, 0);
 });
