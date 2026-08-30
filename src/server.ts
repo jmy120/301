@@ -1,17 +1,38 @@
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
+import { readFile } from 'node:fs/promises';
+import { extname, join } from 'node:path';
 import { parseSysmlXml } from './parser.js';
 import { modelStore } from './store.js';
 
 function send(res: ServerResponse, code: number, body: unknown): void { res.writeHead(code, { 'content-type': 'application/json; charset=utf-8' }); res.end(JSON.stringify(body)); }
-async function body(req: IncomingMessage): Promise<string> { const chunks: Buffer[] = []; for await (const chunk of req) chunks.push(Buffer.from(chunk)); return Buffer.concat(chunks).toString('utf8'); }
+async function sendStatic(res: ServerResponse, path: string): Promise<void> {
+  const file = await readFile(join(process.cwd(), 'public', path));
+  const type = extname(path) === '.js' ? 'text/javascript' : 'text/html';
+  res.writeHead(200, { 'content-type': `${type}; charset=utf-8`, 'cache-control': 'no-store' });
+  res.end(file);
+}
+const MAX_BODY = 100 * 1024 * 1024;
+async function body(req: IncomingMessage): Promise<string> {
+  const declared = Number(req.headers['content-length'] ?? 0);
+  if (declared > MAX_BODY) throw new Error('REQUEST_TOO_LARGE');
+  const chunks: Buffer[] = []; let size = 0;
+  for await (const chunk of req) { const part = Buffer.from(chunk); size += part.length; if (size > MAX_BODY) throw new Error('REQUEST_TOO_LARGE'); chunks.push(part); }
+  const data = Buffer.concat(chunks);
+  // Respect UTF-16 BOM; otherwise XML declaration and UTF-8 are handled normally.
+  if (data[0] === 0xff && data[1] === 0xfe) return data.subarray(2).toString('utf16le');
+  if (data[0] === 0xfe && data[1] === 0xff) { const swapped = Buffer.alloc(data.length - 2); for (let i = 2; i + 1 < data.length; i += 2) { swapped[i - 2] = data[i + 1]; swapped[i - 1] = data[i]; } return swapped.toString('utf16le'); }
+  return data.toString('utf8');
+}
 const server = createServer(async (req, res) => {
   const url = new URL(req.url ?? '/', `http://${req.headers.host ?? 'localhost'}`); const parts = url.pathname.split('/').filter(Boolean);
   try {
+    if (req.method === 'GET' && (url.pathname === '/' || url.pathname === '/index.html')) return sendStatic(res, 'index.html');
+    if (req.method === 'GET' && (url.pathname === '/app.js' || url.pathname === '/app-enhanced.js' || url.pathname === '/diagram-renderer.js')) return sendStatic(res, url.pathname.slice(1));
     if (req.method === 'GET' && url.pathname === '/health') return send(res, 200, { status: 'ok' });
     if (req.method === 'POST' && url.pathname === '/api/models/import') { const xml = await body(req); const model = modelStore.put(parseSysmlXml(xml, req.headers['x-file-name']?.toString() ?? 'model.xml')); return send(res, 201, model); }
-    if (req.method === 'GET' && parts[0] === 'api' && parts[1] === 'models' && parts[3] === 'tree') { const model = modelStore.get(parts[2]); return model ? send(res, 200, model.elements.filter(x => !x.ownerId || !model.elements.some(e => e.id === x.ownerId))) : send(res, 404, { message: 'Model not found' }); }
-    if (req.method === 'GET' && parts[0] === 'api' && parts[1] === 'diagrams') { const diagram = modelStore.diagram(parts[2]); return diagram ? send(res, 200, diagram) : send(res, 404, { message: 'Diagram not found' }); }
-    if (req.method === 'GET' && parts[0] === 'api' && parts[1] === 'elements') { const element = modelStore.element(parts[2]); return element ? send(res, 200, element) : send(res, 404, { message: 'Element not found' }); }
+    if (req.method === 'GET' && parts[0] === 'api' && parts[1] === 'models' && parts[3] === 'tree') { const model = modelStore.get(parts[2]); if (!model) return send(res, 404, { message: 'Model not found' }); const all = [...model.elements, ...model.relations, ...model.diagrams]; const byOwner = new Map<string, any[]>(); for (const item of all) if (item.ownerId) (byOwner.get(item.ownerId) ?? byOwner.set(item.ownerId, []).get(item.ownerId)!).push(item); const roots = all.filter(x => !x.ownerId || !all.some(e => e.id === x.ownerId)); const tree = (x: any): any => ({ ...x, children: (byOwner.get(x.id) ?? []).map(tree) }); return send(res, 200, roots.map(tree)); }
+    if (req.method === 'GET' && parts[0] === 'api' && parts[1] === 'diagrams') { const diagram = modelStore.diagram(parts[2], url.searchParams.get('modelId') ?? undefined); return diagram ? send(res, 200, diagram) : send(res, 404, { message: 'Diagram not found' }); }
+    if (req.method === 'GET' && parts[0] === 'api' && parts[1] === 'elements') { const element = modelStore.element(parts[2], url.searchParams.get('modelId') ?? undefined); return element ? send(res, 200, element) : send(res, 404, { message: 'Element not found' }); }
     return send(res, 404, { message: 'Route not found' });
   } catch (error) { return send(res, 400, { message: error instanceof Error ? error.message : 'Import failed' }); }
 });

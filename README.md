@@ -10,6 +10,8 @@ npm test
 npm run dev
 ```
 
+启动后在浏览器打开 `http://localhost:3000`：导入 XML/XMI 后即可浏览模型树、统计、图列表、图元几何位置与元素详情。前端使用同一服务的 API，无需另行配置端口或跨域。
+
 导入模型：
 
 ```powershell

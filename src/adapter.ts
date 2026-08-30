@@ -1,4 +1,4 @@
-const RELATION_TYPES = new Set(['Association', 'Dependency', 'Generalization', 'Connector', 'Transition', 'Message', 'ControlFlow', 'ObjectFlow', 'Deployment', 'PackageImport', 'PackageMerge', 'Satisfy', 'Verify', 'DeriveReqt', 'Include', 'Extend', 'BindingConnector', 'ItemFlow']);
+const RELATION_TYPES = new Set(['Association', 'Dependency', 'Generalization', 'Connector', 'Transition', 'Message', 'ControlFlow', 'ObjectFlow', 'Deployment', 'PackageImport', 'PackageMerge', 'Satisfy', 'Verify', 'DeriveReqt', 'Include', 'Extend', 'BindingConnector', 'ItemFlow', 'Trace', 'Refine', 'Allocate', 'Flow', 'Realization', 'InterfaceRealization', 'Substitution', 'Abstraction', 'CommunicationPath', 'InterruptFlow']);
 const DIAGRAM_TYPES = new Set(['Diagram', 'DiagramPresentationElement']);
 
 export function localName(name: string): string { return name.includes(':') ? name.slice(name.lastIndexOf(':') + 1) : name; }

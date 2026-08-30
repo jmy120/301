@@ -19,3 +19,8 @@ test('reports unresolved references', () => {
   const result = parseSysmlXml('<xmi:XMI><node xmi:id="a" xmi:type="Connector" source="missing" /></xmi:XMI>');
   assert.equal(result.statistics.danglingReferences, 1);
 });
+
+test('reports unnamed model classifiers but not valid anonymous values', () => {
+  const result = parseSysmlXml('<xmi:XMI><packagedElement xmi:id="class-1" xmi:type="uml:Class" /><ownedAttribute xmi:id="value-1" xmi:type="uml:LiteralString" value="42" /></xmi:XMI>');
+  assert.deepEqual(result.issues.filter(x => x.code === 'MISSING_NAME').map(x => x.elementId), ['class-1']);
+});
