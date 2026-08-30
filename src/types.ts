@@ -1,6 +1,7 @@
 export type Severity = 'error' | 'warning';
 
 export interface Issue {
+  stage: 'parse';
   code: 'INVALID_XML' | 'DUPLICATE_ID' | 'DANGLING_REFERENCE' | 'MISSING_NAME' | 'UNSUPPORTED_ROOT';
   severity: Severity;
   message: string;
@@ -49,6 +50,7 @@ export interface View {
 }
 
 export interface ParsedModel {
+  schemaVersion: '1.0.0';
   id: string;
   source: { fileName: string; encoding: string; xmiVersion?: string; productVersion?: string };
   elements: ModelElement[];
