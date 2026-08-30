@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sysml-parser.local/schema/parsed-model-1.0.0.json",
+  "title": "ParsedModel v1.0.0",
+  "type": "object",
+  "required": ["schemaVersion", "id", "source", "elements", "relations", "diagrams", "views", "issues", "statistics"],
+  "properties": {
+    "schemaVersion": {"const": "1.0.0"},
+    "id": {"type": "string", "minLength": 1},
+    "source": {
+      "type": "object",
+      "required": ["fileName", "encoding"],
+      "properties": {
+        "fileName": {"type": "string"},
+        "encoding": {"type": "string"},
+        "xmiVersion": {"type": "string"},
+        "productVersion": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "elements": {"type": "array", "items": {"$ref": "#/$defs/modelElement"}},
+    "relations": {"type": "array", "items": {"$ref": "#/$defs/relation"}},
+    "diagrams": {"type": "array", "items": {"$ref": "#/$defs/diagram"}},
+    "views": {"type": "array", "items": {"$ref": "#/$defs/view"}},
+    "issues": {"type": "array", "items": {"$ref": "#/$defs/parseIssue"}},
+    "statistics": {"$ref": "#/$defs/statistics"},
+    "indexes": {"$ref": "#/$defs/indexes"}
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "modelElement": {
+      "type": "object",
+      "required": ["id", "metaClass", "childrenIds", "stereotypes", "attributes", "sourceXPath"],
+      "properties": {
+        "id": {"type": "string"}, "metaClass": {"type": "string"}, "name": {"type": "string"}, "qualifiedName": {"type": "string"}, "ownerId": {"type": "string"},
+        "childrenIds": {"type": "array", "items": {"type": "string"}}, "stereotypes": {"type": "array", "items": {"type": "string"}},
+        "attributes": {"type": "object", "additionalProperties": {"type": "string"}}, "sourceXPath": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "relation": {
+      "allOf": [{"$ref": "#/$defs/modelElement"}, {"type": "object", "required": ["kind", "endIds"], "properties": {
+        "kind": {"type": "string"}, "sourceId": {"type": "string"}, "targetId": {"type": "string"}, "sourceIds": {"type": "array", "items": {"type": "string"}}, "targetIds": {"type": "array", "items": {"type": "string"}}, "endIds": {"type": "array", "items": {"type": "string"}}, "direction": {"type": "string"}
+      }, "additionalProperties": false}]
+    },
+    "diagram": {
+      "allOf": [{"$ref": "#/$defs/modelElement"}, {"type": "object", "required": ["type", "viewIds"], "properties": {"type": {"type": "string"}, "rootViewId": {"type": "string"}, "imageRef": {"type": "string"}, "viewIds": {"type": "array", "items": {"type": "string"}}}, "additionalProperties": false}]
+    },
+    "view": {
+      "type": "object", "required": ["id", "diagramId", "kind", "style", "sourceXPath"],
+      "properties": {"id": {"type": "string"}, "diagramId": {"type": "string"}, "modelElementId": {"type": "string"}, "kind": {"type": "string"}, "bounds": {"type": "string"}, "waypoints": {"type": "string"}, "label": {"type": "string"}, "style": {"type": "object", "additionalProperties": {"type": "string"}}, "sourceXPath": {"type": "string"}},
+      "additionalProperties": false
+    },
+    "parseIssue": {
+      "type": "object", "required": ["stage", "code", "severity", "message", "xpath"],
+      "properties": {"stage": {"const": "parse"}, "code": {"type": "string"}, "severity": {"enum": ["error", "warning"]}, "message": {"type": "string"}, "xpath": {"type": "string"}, "elementId": {"type": "string"}, "referenceId": {"type": "string"}, "diagramId": {"type": "string"}, "viewId": {"type": "string"}},
+      "additionalProperties": false
+    },
+    "statistics": {"type": "object", "required": ["elements", "relations", "diagrams", "views", "danglingReferences", "duplicateIds"], "properties": {"elements": {"type": "integer", "minimum": 0}, "relations": {"type": "integer", "minimum": 0}, "diagrams": {"type": "integer", "minimum": 0}, "views": {"type": "integer", "minimum": 0}, "danglingReferences": {"type": "integer", "minimum": 0}, "duplicateIds": {"type": "integer", "minimum": 0}}, "additionalProperties": false},
+    "indexes": {"type": "object"}
+  }
+}
