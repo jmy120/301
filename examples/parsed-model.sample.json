@@ -1,0 +1,140 @@
+{
+  "schemaVersion": "1.0.0",
+  "id": "model-sample-001",
+  "source": {
+    "fileName": "sample.sysml.xml",
+    "encoding": "UTF-8",
+    "xmiVersion": "2.5",
+    "productVersion": "2026x v2"
+  },
+  "elements": [
+    {
+      "id": "model-1",
+      "metaClass": "uml:Model",
+      "name": "导航系统",
+      "qualifiedName": "导航系统",
+      "childrenIds": ["pkg-1"],
+      "stereotypes": [],
+      "attributes": {"xmi:id": "model-1", "xmi:type": "uml:Model", "name": "导航系统"},
+      "sourceXPath": "/xmi:XMI/uml:Model"
+    },
+    {
+      "id": "pkg-1",
+      "metaClass": "uml:Package",
+      "name": "结构模型",
+      "qualifiedName": "导航系统::结构模型",
+      "ownerId": "model-1",
+      "childrenIds": ["block-1", "port-1", "port-2", "conn-1"],
+      "stereotypes": [],
+      "attributes": {"xmi:id": "pkg-1", "xmi:type": "uml:Package", "name": "结构模型"},
+      "sourceXPath": "/xmi:XMI/uml:Model/packagedElement"
+    },
+    {
+      "id": "block-1",
+      "metaClass": "uml:Class",
+      "name": "导航处理器",
+      "qualifiedName": "导航系统::结构模型::导航处理器",
+      "ownerId": "pkg-1",
+      "childrenIds": [],
+      "stereotypes": ["Block"],
+      "attributes": {"xmi:id": "block-1", "xmi:type": "uml:Class", "name": "导航处理器"},
+      "sourceXPath": "/xmi:XMI/uml:Model/packagedElement/packagedElement"
+    },
+    {
+      "id": "port-1",
+      "metaClass": "uml:Property",
+      "name": "输入端口",
+      "qualifiedName": "导航系统::结构模型::输入端口",
+      "ownerId": "pkg-1",
+      "childrenIds": [],
+      "stereotypes": ["FlowPort"],
+      "attributes": {"xmi:id": "port-1", "xmi:type": "uml:Property", "name": "输入端口"},
+      "sourceXPath": "/xmi:XMI/uml:Model/packagedElement/ownedAttribute"
+    },
+    {
+      "id": "port-2",
+      "metaClass": "uml:Property",
+      "name": "输出端口",
+      "qualifiedName": "导航系统::结构模型::输出端口",
+      "ownerId": "pkg-1",
+      "childrenIds": [],
+      "stereotypes": ["FlowPort"],
+      "attributes": {"xmi:id": "port-2", "xmi:type": "uml:Property", "name": "输出端口"},
+      "sourceXPath": "/xmi:XMI/uml:Model/packagedElement/ownedAttribute"
+    }
+  ],
+  "relations": [
+    {
+      "id": "conn-1",
+      "metaClass": "uml:Connector",
+      "kind": "uml:Connector",
+      "name": "数据连接",
+      "ownerId": "pkg-1",
+      "childrenIds": [],
+      "stereotypes": [],
+      "attributes": {"xmi:id": "conn-1", "xmi:type": "uml:Connector", "name": "数据连接"},
+      "sourceXPath": "/xmi:XMI/uml:Model/packagedElement/connector",
+      "sourceId": "port-1",
+      "targetId": "port-2",
+      "sourceIds": ["port-1"],
+      "targetIds": ["port-2"],
+      "endIds": ["port-1", "port-2"],
+      "direction": "sourceToTarget"
+    }
+  ],
+  "diagrams": [
+    {
+      "id": "diagram-1",
+      "metaClass": "uml:Diagram",
+      "type": "InternalBlockDiagram",
+      "name": "结构连接图",
+      "ownerId": "pkg-1",
+      "childrenIds": [],
+      "stereotypes": [],
+      "attributes": {"xmi:id": "diagram-1", "diagramType": "InternalBlockDiagram", "name": "结构连接图"},
+      "sourceXPath": "/xmi:XMI/diagram",
+      "imageRef": "resources/diagram-1.png",
+      "viewIds": ["view-1", "view-2", "view-3"]
+    }
+  ],
+  "views": [
+    {
+      "id": "view-1",
+      "diagramId": "diagram-1",
+      "modelElementId": "block-1",
+      "kind": "Shape",
+      "bounds": "100,80,240,140",
+      "label": "导航处理器",
+      "style": {},
+      "sourceXPath": "/xmi:XMI/diagram/ownedElement[1]"
+    },
+    {
+      "id": "view-2",
+      "diagramId": "diagram-1",
+      "modelElementId": "port-1",
+      "kind": "Shape",
+      "bounds": "120,130,20,20",
+      "label": "输入端口",
+      "style": {},
+      "sourceXPath": "/xmi:XMI/diagram/ownedElement[2]"
+    },
+    {
+      "id": "view-3",
+      "diagramId": "diagram-1",
+      "modelElementId": "conn-1",
+      "kind": "Edge",
+      "waypoints": "140,140;300,140",
+      "style": {},
+      "sourceXPath": "/xmi:XMI/diagram/ownedElement[3]"
+    }
+  ],
+  "issues": [],
+  "statistics": {
+    "elements": 5,
+    "relations": 1,
+    "diagrams": 1,
+    "views": 3,
+    "danglingReferences": 0,
+    "duplicateIds": 0
+  }
+}
