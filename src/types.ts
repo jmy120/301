@@ -2,12 +2,14 @@ export type Severity = 'error' | 'warning';
 
 export interface Issue {
   stage: 'parse';
-  code: 'INVALID_XML' | 'DUPLICATE_ID' | 'DANGLING_REFERENCE' | 'MISSING_NAME' | 'UNSUPPORTED_ROOT';
+  code: 'INVALID_XML' | 'DUPLICATE_ID' | 'DANGLING_REFERENCE' | 'MISSING_NAME' | 'UNSUPPORTED_ROOT' | 'UNKNOWN_METACLASS' | 'INVALID_VIEW';
   severity: Severity;
   message: string;
   xpath: string;
   elementId?: string;
   referenceId?: string;
+  diagramId?: string;
+  viewId?: string;
 }
 
 export interface ModelElement {
@@ -27,6 +29,8 @@ export interface Relation extends ModelElement {
   sourceId?: string;
   targetId?: string;
   endIds: string[];
+  sourceIds?: string[];
+  targetIds?: string[];
   direction?: string;
 }
 

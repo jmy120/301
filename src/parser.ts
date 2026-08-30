@@ -9,6 +9,7 @@ const referenceTags = new Set(['annotatedElement', 'client', 'supplier', 'source
 // must enter the semantic index as well, otherwise valid memberEnd references
 // look dangling and their diagram views cannot be resolved.
 const structuralTags = new Set(['packagedElement', 'ownedElement', 'ownedAttribute', 'ownedEnd', 'ownedRule', 'nestedClassifier', 'ownedBehavior', 'ownedParameter', 'region', 'subvertex', 'transition', 'ownedMember']);
+const knownMetaClasses = new Set(['Model', 'Package', 'Class', 'Property', 'Port', 'Block', 'Requirement', 'Actor', 'UseCase', 'Activity', 'Action', 'ObjectNode', 'StateMachine', 'State', 'Pseudostate', 'Region', 'Transition', 'Interaction', 'Lifeline', 'Message', 'ConstraintBlock', 'Constraint', 'ValueProperty', 'Node', 'Device', 'Artifact', 'Association', 'Dependency', 'Generalization', 'Connector', 'ControlFlow', 'ObjectFlow', 'Deployment', 'PackageImport', 'PackageMerge', 'Satisfy', 'Verify', 'DeriveReqt', 'Include', 'Extend', 'BindingConnector', 'ItemFlow', 'Trace', 'Refine', 'Allocate', 'Flow', 'Realization', 'InterfaceRealization', 'Substitution', 'Abstraction', 'CommunicationPath', 'InterruptFlow', 'OpaqueExpression', 'LiteralString', 'LiteralInteger', 'LiteralUnlimitedNatural', 'ConnectorEnd', 'Comment']);
 // These UML nodes carry values, endpoints, or relationship semantics and are
 // valid without a user-visible name.  Reporting them as missing names makes
 // the model-quality result unusably noisy.
@@ -30,6 +31,7 @@ function refId(value?: string): string | undefined {
 function refIds(value?: string): string[] {
   return (value ?? '').trim().split(/\s+/).map(refId).filter((x): x is string => Boolean(x));
 }
+function nodeRef(node: RawNode): string | undefined { return refId(attribute(node.attrs, 'xmi:idref', 'href') ?? node.text); }
 
 export function parseSysmlXml(xml: string, fileName = 'model.xml'): ParsedModel {
   const issues: Issue[] = [];
@@ -68,15 +70,17 @@ export function parseSysmlXml(xml: string, fileName = 'model.xml'): ParsedModel 
         // repeat IDs across separate fileParts.
         if (explicitId && semanticAllowed && (isSemantic || isDiagram(type, tag, attrs) || isView(type, tag, attrs))) { if (seenIds.has(id)) { duplicateIds.add(id); issues.push({ stage: 'parse', code: 'DUPLICATE_ID', severity: 'error', message: `Duplicate ID: ${id}`, xpath: nodePath, elementId: id }); } seenIds.add(id); }
         if (isView(type, tag, attrs) && diagramId) {
-          views.set(id, { id, diagramId, modelElementId: attribute(attrs, 'modelElement', 'modelElementId', 'subject'), kind: type, bounds: attribute(attrs, 'bounds'), waypoints: attribute(attrs, 'waypoints', 'points'), label: attribute(attrs, 'text', 'label'), style: attrs, sourceXPath: nodePath });
+          views.set(id, { id, diagramId, modelElementId: refId(attribute(attrs, 'modelElement', 'modelElementId', 'subject')), kind: type, bounds: attribute(attrs, 'bounds'), waypoints: attribute(attrs, 'waypoints', 'points'), label: attribute(attrs, 'text', 'label'), style: attrs, sourceXPath: nodePath });
         } else if (isDiagram(type, tag, attrs)) {
           diagrams.set(id, { id, metaClass: type, type: attribute(attrs, 'diagramType', 'humanType', 'type') ?? type, name: attribute(attrs, 'name'), ownerId: parentId, childrenIds: [], stereotypes: [], attributes: attrs, sourceXPath: nodePath, imageRef: attribute(attrs, 'imageRef', 'image'), viewIds: [] });
         } else if (isSemantic && isRelation(type, tag)) {
-          relations.set(id, { id, metaClass: type, kind: type, name: attribute(attrs, 'name'), ownerId: refId(attribute(attrs, 'owner', 'namespace')) ?? parentId, childrenIds: [], stereotypes: [], attributes: attrs, sourceXPath: nodePath, sourceId: refId(attribute(attrs, 'source', 'client', 'from')), targetId: refId(attribute(attrs, 'target', 'supplier', 'to')), endIds: refIds(attribute(attrs, 'memberEnd', 'ends', 'end')), direction: attribute(attrs, 'direction') });
+          const sourceIds = refIds(attribute(attrs, 'source', 'client', 'from')); const targetIds = refIds(attribute(attrs, 'target', 'supplier', 'to'));
+          relations.set(id, { id, metaClass: type, kind: type, name: attribute(attrs, 'name'), ownerId: refId(attribute(attrs, 'owner', 'namespace')) ?? parentId, childrenIds: [], stereotypes: [], attributes: attrs, sourceXPath: nodePath, sourceId: sourceIds[0], targetId: targetIds[0], sourceIds, targetIds, endIds: refIds(attribute(attrs, 'memberEnd', 'ends', 'end')), direction: attribute(attrs, 'direction') });
         } else if (isSemantic) {
           if (elements.has(id)) { duplicateIds.add(id); issues.push({ stage: 'parse', code: 'DUPLICATE_ID', severity: 'error', message: `Duplicate ID: ${id}`, xpath: nodePath, elementId: id }); }
           else elements.set(id, { id, metaClass: type, name: attribute(attrs, 'name'), ownerId: refId(attribute(attrs, 'owner', 'namespace')) ?? parentId, childrenIds: [], stereotypes: (attribute(attrs, 'stereotype', 'appliedStereotype') ?? '').split(/\s+/).filter(Boolean), attributes: attrs, sourceXPath: nodePath });
         }
+        if (semanticAllowed && explicitId && !isReference && !isDiagram(type, tag, attrs) && !isView(type, tag, attrs) && !knownMetaClasses.has(normalized) && !structuralTags.has(tagName)) issues.push({ stage: 'parse', code: 'UNKNOWN_METACLASS', severity: 'warning', message: `Unknown metaclass: ${type}`, xpath: nodePath, elementId: id });
         raw.push(node);
         const child = Array.isArray(value) ? value : [];
         // filePart may contain MagicDraw installation profiles/projects. They are not part of the exported user model.
@@ -90,12 +94,12 @@ export function parseSysmlXml(xml: string, fileName = 'model.xml'): ParsedModel 
   // MagicDraw commonly puts Dependency client/supplier and Association memberEnd in child reference nodes.
   for (const node of raw) {
     if (!node.parentId || !relations.has(node.parentId)) continue;
-    const ref = refId(attribute(node.attrs, 'xmi:idref', 'href'));
+    const ref = nodeRef(node);
     if (!ref) continue;
     const relation = relations.get(node.parentId)!;
     switch (localName(node.tag)) {
-      case 'client': case 'source': relation.sourceId ??= ref; break;
-      case 'supplier': case 'target': relation.targetId ??= ref; break;
+      case 'client': case 'source': relation.sourceId ??= ref; (relation.sourceIds ??= []).push(ref); break;
+      case 'supplier': case 'target': relation.targetId ??= ref; (relation.targetIds ??= []).push(ref); break;
       case 'memberEnd': case 'ownedEnd': relation.endIds.push(ref); break;
     }
   }
@@ -113,7 +117,7 @@ export function parseSysmlXml(xml: string, fileName = 'model.xml'): ParsedModel 
   }
   for (const node of raw.filter(node => localName(node.tag) === 'mdElement' && node.filePartName && diagramByStream.has(node.filePartName))) {
     const children = childrenByParent.get(node.id) ?? [];
-    const modelRef = children.find(child => localName(child.tag) === 'elementID')?.attrs['xmi:idref'];
+    const modelRef = refId(children.find(child => localName(child.tag) === 'elementID')?.attrs['xmi:idref'] ?? children.find(child => localName(child.tag) === 'elementID')?.attrs.href);
     if (!modelRef) continue;
     const geometry = children.find(child => localName(child.tag) === 'geometry')?.text;
     const diagramId = diagramByStream.get(node.filePartName!);
@@ -154,7 +158,7 @@ export function parseSysmlXml(xml: string, fileName = 'model.xml'): ParsedModel 
     if (!obj.name && !obj.id.startsWith('diagram-link:') && normalizedType(obj.metaClass) !== 'Model' && !nameOptionalMetaClasses.has(normalizedType(obj.metaClass))) issues.push({ stage: 'parse', code: 'MISSING_NAME', severity: 'warning', message: `${obj.metaClass} has no name`, xpath: obj.sourceXPath, elementId: obj.id });
   }
   for (const relation of relations.values()) for (const ref of [relation.sourceId, relation.targetId, ...relation.endIds]) if (ref && !allObjects.has(ref)) issues.push({ stage: 'parse', code: 'DANGLING_REFERENCE', severity: 'error', message: `Unresolved ${relation.kind} reference: ${ref}`, xpath: relation.sourceXPath, elementId: relation.id, referenceId: ref });
-  for (const view of views.values()) { diagrams.get(view.diagramId)?.viewIds.push(view.id); if (view.modelElementId && !allObjects.has(view.modelElementId)) issues.push({ stage: 'parse', code: 'DANGLING_REFERENCE', severity: 'error', message: `Unresolved view model element: ${view.modelElementId}`, xpath: view.sourceXPath, elementId: view.id, referenceId: view.modelElementId }); }
+  for (const view of views.values()) { const diagram = diagrams.get(view.diagramId); if (!diagram) issues.push({ stage: 'parse', code: 'INVALID_VIEW', severity: 'error', message: `View belongs to missing diagram: ${view.diagramId}`, xpath: view.sourceXPath, elementId: view.id, diagramId: view.diagramId, viewId: view.id }); else diagram.viewIds.push(view.id); if (view.modelElementId && !allObjects.has(view.modelElementId)) issues.push({ stage: 'parse', code: 'DANGLING_REFERENCE', severity: 'error', message: `Unresolved view model element: ${view.modelElementId}`, xpath: view.sourceXPath, elementId: view.id, referenceId: view.modelElementId, viewId: view.id, diagramId: view.diagramId }); }
   const rootAttrs = raw.find(node => node.tag === rootTag)?.attrs ?? {};
   const exporterVersion = /<xmi:exporterVersion>([^<]+)<\/xmi:exporterVersion>/.exec(xml)?.[1];
   return { schemaVersion: '1.0.0', id: crypto.randomUUID(), source: { fileName, encoding: /^\s*<\?xml[^>]*encoding=["']([^"']+)/i.exec(xml)?.[1] ?? 'UTF-8', xmiVersion: attribute(rootAttrs, 'xmi:version', 'xmiVersion'), productVersion: attribute(rootAttrs, 'productVersion') ?? exporterVersion }, elements: [...elements.values()], relations: [...relations.values()], diagrams: [...diagrams.values()], views: [...views.values()], issues, statistics: { elements: elements.size, relations: relations.size, diagrams: diagrams.size, views: views.size, danglingReferences: issues.filter(x => x.code === 'DANGLING_REFERENCE').length, duplicateIds: duplicateIds.size } };
