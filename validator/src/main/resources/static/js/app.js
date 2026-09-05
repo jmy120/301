@@ -547,19 +547,30 @@
     }
     async function uploadModel(file) {
         if (!file) return;
+        const btn = $("#btn-upload");
+        const oldLabel = btn ? btn.textContent : "";
+        if (btn) { btn.disabled = true; btn.textContent = "解析校验中…"; }
         try {
-            const res = await Api.upload("/api/models/upload", file);
+            // 走解析桥接：后端把 XML 转发给解析模块(3000)，返回 ParsedModel JSON
+            const res = await Api.upload("/api/models/parse", file);
             if (!res || res.success === false) {
-                throw new Error((res && res.message) || "上传失败");
+                throw new Error((res && res.message) || "解析失败");
             }
-            log("导入模型", file.name + " → 已保存为 " + res.data.fileName);
-            showToast("上传成功：仅保存了 XML。校验仍需粘贴解析模块输出的 JSON", "success");
+            const model = res.data;
+            const input = $("#json-input");
+            if (input) input.value = JSON.stringify(model, null, 2);
+            await runValidate(false); // 复用现有校验流程（内部会渲染模型树/结果）
+            const last = Store.load(Store.KEY_RESULT);
+            const count = (last && last.issues ? last.issues.length : 0);
+            log("导入解析并校验", file.name + " → id=" + (model.id || "") + "，发现 " + count + " 个问题");
+            showToast("解析并校验完成：发现 " + count + " 个问题（规则按当前启用状态实时计算）", "success");
         } catch (e) {
-            log("导入模型", file.name + " 失败：" + e.message, false);
+            log("导入解析并校验", file.name + " 失败：" + e.message, false);
             showToast(e.message, "error");
+        } finally {
+            if (btn) { btn.disabled = false; btn.textContent = oldLabel; }
         }
     }
-
     /* ---------- JSON 弹窗 ---------- */
     function openJsonModal() { $("#json-modal").classList.add("show"); }
     function closeJsonModal() { $("#json-modal").classList.remove("show"); }
