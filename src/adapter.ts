@@ -13,7 +13,9 @@ export function isRelation(type: string, tag: string): boolean {
   return RELATION_TYPES.has(normalizedType(type)) || RELATION_TYPES.has(localName(tag));
 }
 export function isDiagram(type: string, tag: string, attrs: Record<string, string>): boolean {
-  return DIAGRAM_TYPES.has(normalizedType(type)) || DIAGRAM_TYPES.has(localName(tag)) || Boolean(attribute(attrs, 'diagramType', 'humanType'));
+  const normalized = normalizedType(type).toLowerCase();
+  const local = localName(tag).toLowerCase();
+  return [...DIAGRAM_TYPES].some(value => value.toLowerCase() === normalized || value.toLowerCase() === local) || Boolean(attribute(attrs, 'diagramType', 'humanType'));
 }
 export function isView(type: string, tag: string, attrs: Record<string, string>): boolean {
   const value = `${type} ${localName(tag)}`.toLowerCase();

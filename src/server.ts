@@ -12,15 +12,31 @@ async function sendStatic(res: ServerResponse, path: string): Promise<void> {
   res.end(file);
 }
 const MAX_BODY = 100 * 1024 * 1024;
+function utf16Be(data: Buffer, offset = 0): string {
+  const swapped = Buffer.alloc(data.length - offset);
+  for (let i = offset; i + 1 < data.length; i += 2) { swapped[i - offset] = data[i + 1]; swapped[i - offset + 1] = data[i]; }
+  return swapped.toString('utf16le');
+}
+function likelyUtf16(data: Buffer): 'le' | 'be' | undefined {
+  const length = Math.min(data.length - (data.length % 2), 256); if (length < 8) return undefined;
+  let evenNuls = 0; let oddNuls = 0;
+  for (let i = 0; i < length; i += 2) { if (data[i] === 0) evenNuls++; if (data[i + 1] === 0) oddNuls++; }
+  const pairs = length / 2;
+  if (oddNuls / pairs > 0.4) return 'le';
+  if (evenNuls / pairs > 0.4) return 'be';
+}
 async function body(req: IncomingMessage): Promise<string> {
   const declared = Number(req.headers['content-length'] ?? 0);
   if (declared > MAX_BODY) throw new Error('REQUEST_TOO_LARGE');
   const chunks: Buffer[] = []; let size = 0;
-  for await (const chunk of req) { const part = Buffer.from(chunk); size += part.length; if (size > MAX_BODY) throw new Error('REQUEST_TOO_LARGE'); chunks.push(part); }
+  for await (const chunk of req) { const part = Buffer.from(chunk); size += part.length; if (size > MAX_BODY) { req.destroy(); throw new Error('REQUEST_TOO_LARGE'); } chunks.push(part); }
   const data = Buffer.concat(chunks);
   // Respect UTF-16 BOM; otherwise XML declaration and UTF-8 are handled normally.
   if (data[0] === 0xff && data[1] === 0xfe) return data.subarray(2).toString('utf16le');
-  if (data[0] === 0xfe && data[1] === 0xff) { const swapped = Buffer.alloc(data.length - 2); for (let i = 2; i + 1 < data.length; i += 2) { swapped[i - 2] = data[i + 1]; swapped[i - 1] = data[i]; } return swapped.toString('utf16le'); }
+  if (data[0] === 0xfe && data[1] === 0xff) return utf16Be(data, 2);
+  const encoding = likelyUtf16(data);
+  if (encoding === 'le') return data.toString('utf16le');
+  if (encoding === 'be') return utf16Be(data);
   return data.toString('utf8');
 }
 const server = createServer(async (req, res) => {

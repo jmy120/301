@@ -22,6 +22,7 @@
     "relations": {"type": "array", "items": {"$ref": "#/$defs/relation"}},
     "diagrams": {"type": "array", "items": {"$ref": "#/$defs/diagram"}},
     "views": {"type": "array", "items": {"$ref": "#/$defs/view"}},
+    "extensions": {"type": "array", "items": {"$ref": "#/$defs/extensionNode"}},
     "issues": {"type": "array", "items": {"$ref": "#/$defs/parseIssue"}},
     "statistics": {"$ref": "#/$defs/statistics"},
     "indexes": {"$ref": "#/$defs/indexes"}
@@ -49,6 +50,11 @@
     "view": {
       "type": "object", "required": ["id", "diagramId", "kind", "style", "sourceXPath"],
       "properties": {"id": {"type": "string"}, "diagramId": {"type": "string"}, "modelElementId": {"type": "string"}, "kind": {"type": "string"}, "bounds": {"type": "string"}, "waypoints": {"type": "string"}, "label": {"type": "string"}, "style": {"type": "object", "additionalProperties": {"type": "string"}}, "sourceXPath": {"type": "string"}},
+      "additionalProperties": false
+    },
+    "extensionNode": {
+      "type": "object", "required": ["tag", "metaClass", "attributes", "sourceXPath"],
+      "properties": {"id": {"type": "string"}, "tag": {"type": "string"}, "metaClass": {"type": "string"}, "attributes": {"type": "object", "additionalProperties": {"type": "string"}}, "sourceXPath": {"type": "string"}},
       "additionalProperties": false
     },
     "parseIssue": {

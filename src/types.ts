@@ -53,6 +53,14 @@ export interface View {
   sourceXPath: string;
 }
 
+export interface ExtensionNode {
+  id?: string;
+  tag: string;
+  metaClass: string;
+  attributes: Record<string, string>;
+  sourceXPath: string;
+}
+
 export interface ParsedModel {
   schemaVersion: '1.0.0';
   id: string;
@@ -61,6 +69,7 @@ export interface ParsedModel {
   relations: Relation[];
   diagrams: Diagram[];
   views: View[];
+  extensions?: ExtensionNode[];
   issues: Issue[];
   statistics: { elements: number; relations: number; diagrams: number; views: number; danglingReferences: number; duplicateIds: number };
 }

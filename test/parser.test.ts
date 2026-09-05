@@ -29,3 +29,24 @@ test('normalizes view and mdElement external references', () => {
   const result = parseSysmlXml('<xmi:XMI><packagedElement xmi:id="e1" xmi:type="uml:Class" name="E"/><diagram xmi:id="d1"><shape xmi:id="v1" modelElement="other.xmi#e1"/><mdElement xmi:id="v2"><elementID href="PROJECT-x?resource=r#e1"/></mdElement></diagram></xmi:XMI>');
   assert.equal(result.views.find(x => x.id === 'v1')?.modelElementId, 'e1');
 });
+
+test('normalizes relation endpoint aliases and external references', () => {
+  const result = parseSysmlXml('<xmi:XMI><packagedElement xmi:id="parent" xmi:type="uml:Class" name="Parent"/><packagedElement xmi:id="child" xmi:type="uml:Class" name="Child"/><packagedElement xmi:id="g" xmi:type="uml:Generalization" general="shared.uml#parent" specific="child"/></xmi:XMI>');
+  const relation = result.relations.find(x => x.id === 'g');
+  assert.equal(relation?.targetId, 'parent');
+});
+
+test('reports invalid diagram roots and edge endpoints', () => {
+  const result = parseSysmlXml('<xmi:XMI><diagram xmi:id="d" rootViewId="missing"><edge xmi:id="e" sourceView="also-missing"/></diagram></xmi:XMI>');
+  assert.equal(result.issues.filter(x => x.code === 'INVALID_VIEW').length, 2);
+});
+
+test('preserves unknown extension nodes for downstream diagnostics', () => {
+  const result = parseSysmlXml('<xmi:XMI><vendor:CustomNode xmi:id="custom-1" xmi:type="vendor:CustomNode" flag="x"/></xmi:XMI>');
+  assert.deepEqual(result.extensions?.[0], { id: 'custom-1', tag: 'vendor:CustomNode', metaClass: 'vendor:CustomNode', attributes: { 'xmi:id': 'custom-1', 'xmi:type': 'vendor:CustomNode', flag: 'x' }, sourceXPath: '/xmi:XMI/vendor:CustomNode' });
+});
+
+test('does not assign a generated XML wrapper as the root Model owner', () => {
+  const result = parseSysmlXml('<xmi:XMI><uml:Model xmi:id="model" name="M"/></xmi:XMI>');
+  assert.equal(result.elements[0].ownerId, undefined);
+});
