@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SysML模型解析与校验系统 - 校验任务</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="app">
+
+<header class="topbar">
+    <div class="logo">🛡 SysML模型解析与校验系统 <small>校验任务</small></div>
+    <nav class="topnav">
+        <a href="index.html">模型</a>
+        <a href="rule.html">规则</a>
+        <a href="result.html">结果</a>
+        <a href="tasks.html" class="active">任务</a>
+    </nav>
+    <span class="spacer" style="flex:1"></span>
+    <span class="muted" id="tasks-topbar-hint">校验历史 · 模型/规则/结果快照 · 报告导出</span>
+    <button id="btn-back" class="small">← 返回工作台</button>
+</header>
+
+<div class="toolbar">
+    <select id="filt-status" style="width:110px;">
+        <option value="">全部状态</option>
+        <option value="PENDING">待执行</option>
+        <option value="RUNNING">执行中</option>
+        <option value="SUCCESS">成功</option>
+        <option value="FAILED">失败</option>
+        <option value="CANCELLED">已取消</option>
+    </select>
+    <input id="keyword" placeholder="搜索任务名称/模型文件名" style="width:220px;">
+    <button id="btn-search" class="primary">🔍 查询</button>
+    <button id="btn-reset">重置</button>
+    <span style="flex:1"></span>
+    <span class="muted" id="tasks-hint">在工作台「▶ 开始校验」后可将结果保存为任务</span>
+</div>
+
+<div class="page">
+    <div class="box" style="flex:1;display:flex;flex-direction:column;min-height:0;">
+        <div class="panel-head">
+            <span>任务列表 <span class="muted" id="task-count"></span></span>
+            <span class="muted" id="page-info"></span>
+        </div>
+        <div class="table-wrap">
+            <table class="fixed">
+                <thead>
+                <tr>
+                    <th style="width:64px">ID</th>
+                    <th class="left">任务名称</th>
+                    <th class="left" style="width:150px">模型文件</th>
+                    <th style="width:70px">状态</th>
+                    <th style="width:60px">问题数</th>
+                    <th style="width:130px">严重程度</th>
+                    <th style="width:70px">耗时</th>
+                    <th style="width:140px">创建时间</th>
+                    <th style="width:150px">操作</th>
+                </tr>
+                </thead>
+                <tbody id="task-body"></tbody>
+            </table>
+        </div>
+        <div class="pager">
+            <button id="page-prev">◀ 上一页</button>
+            <button id="page-next">下一页 ▶</button>
+        </div>
+    </div>
+</div>
+
+</div>
+
+<!-- 任务详情弹窗 -->
+<div class="modal-mask" id="detail-modal">
+    <div class="modal" style="width:860px;">
+        <header>任务详情 <span class="muted" id="detail-title"></span></header>
+        <div class="modal-body" id="detail-body" style="max-height:70vh;"></div>
+        <footer>
+            <span class="muted" id="detail-hint"></span>
+            <button id="detail-rerun" class="green">↻ 重跑</button>
+            <span class="toolbar-inline" style="gap:6px;">
+                <button id="report-html">🖨 HTML报告</button>
+                <button id="report-word">⬇ 导出Word</button>
+                <button id="report-json">⬇ 导出JSON</button>
+            </span>
+            <button id="detail-close">关闭</button>
+        </footer>
+    </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/common.js"></script>
+<script src="js/tasks.js"></script>
+</body>
+</html>

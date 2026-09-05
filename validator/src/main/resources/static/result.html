@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SysML模型解析与校验系统 - 校验结果</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="app">
+
+<header class="topbar">
+    <div class="logo">🛡 SysML模型解析与校验系统 <small>校验结果</small></div>
+    <nav class="topnav">
+        <a href="index.html">模型</a>
+        <a href="rule.html">规则</a>
+        <a href="result.html" class="active">结果</a>
+        <a href="tasks.html">任务</a>
+    </nav>
+    <span class="spacer" style="flex:1"></span>
+    <span class="muted" id="result-topbar-hint"></span>
+    <button id="btn-back" class="small">📁 返回工作台</button>
+</header>
+
+<div class="toolbar">
+    <button id="btn-revalidate">▶ 重新校验</button>
+    <button id="btn-export">📄 导出结果JSON</button>
+    <button id="btn-task-report" class="green">📋 保存为任务并导出报告</button>
+</div>
+<div class="toolbar" style="border-top:1px solid #eee; min-height:34px; padding:6px 15px;">
+    <span class="muted" id="result-hint"></span>
+</div>
+
+<div class="page">
+    <div class="result-page">
+
+        <!-- 左侧模型结构 -->
+        <div class="left box">
+            <h3>模型结构</h3>
+            <input class="search" id="tree-search" placeholder="搜索模型元素">
+            <div class="tree-wrap" id="tree-wrap"></div>
+        </div>
+
+        <!-- 中间统计+问题列表 -->
+        <div class="main-col">
+            <div class="box">
+                <h3>校验统计</h3>
+                <div class="cards" id="summary-cards"></div>
+            </div>
+                <div class="result-table box" style="flex:1;min-height:0;">
+                <h3>问题列表 <span class="muted" id="issue-count"></span></h3>
+                <div class="table-wrap">
+                    <table class="fixed">
+                    <thead>
+                    <tr>
+                        <th style="width:70px">等级</th>
+                        <th style="width:110px">规则编号</th>
+                        <th style="width:110px">规则名称</th>
+                        <th style="width:110px">元素</th>
+                        <th>问题描述</th>
+                        <th style="width:200px">定位 (XPath)</th>
+                    </tr>
+                    </thead>
+                    <tbody id="issues-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧任务信息 -->
+        <div class="right">
+            <div class="box">
+                <h3>任务信息</h3>
+                <div id="task-info"></div>
+            </div>
+            <div class="box">
+                <h3>模型统计</h3>
+                <div id="model-stats"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+</div>
+<script src="js/api.js"></script>
+<script src="js/common.js"></script>
+<script src="js/result.js"></script>
+</body>
+</html>
