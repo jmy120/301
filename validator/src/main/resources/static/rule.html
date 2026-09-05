@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SysML模型解析与校验系统 - 规则配置</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="app">
+
+    <header class="topbar">
+        <div class="logo">🛡 SysML模型解析与校验系统 <small>规则配置</small></div>
+        <nav class="topnav">
+            <a href="index.html">模型</a>
+            <a href="rule.html" class="active">规则</a>
+            <a href="result.html">结果</a>
+            <a href="tasks.html">任务</a>
+        </nav>
+        <span class="spacer" style="flex:1"></span>
+        <span class="muted" id="rule-topbar-hint">内置规则库 · 新增规则可写自定义 JS 脚本</span>
+        <button id="btn-back" class="small">← 返回工作台</button>
+    </header>
+
+    <div class="toolbar">
+        <button id="btn-add" class="primary">➕ 新增规则</button>
+        <button id="btn-edit">✏ 修改</button>
+        <button id="btn-delete" class="danger">🗑 删除</button>
+        <button id="btn-toggle">✔ 启用/停用</button>
+        <button id="btn-init">📥 初始化内置规则</button>
+        <span style="flex:1"></span>
+        <input id="rule-search" placeholder="搜索规则编号/名称" style="width:200px;">
+        <select id="filt-severity" style="width:100px;">
+            <option value="">全部等级</option>
+        </select>
+    </div>
+
+    <div class="page">
+        <div class="rule-page">
+
+            <!-- 左侧检测对象 -->
+            <div class="category box">
+                <div class="panel-head"><span>检测对象</span></div>
+                <ul id="category-list">
+                    <li data-target="" class="active">全部</li>
+                    <li class="muted" style="padding-left:12px;">加载中…</li>
+                </ul>
+            </div>
+
+            <!-- 中间规则列表 -->
+            <div class="rule-list box">
+                <div class="panel-head">
+                    <span>规则库 <span class="muted" id="rule-count"></span></span>
+                    <span class="muted" id="page-info"></span>
+                </div>
+                <div class="table-wrap">
+                    <table class="fixed">
+                        <thead>
+                        <tr>
+                            <th style="width:90px">编号</th>
+                            <th class="left">规则名称</th>
+                            <th style="width:110px">检测对象</th>
+                            <th style="width:70px">等级</th>
+                            <th style="width:70px">状态</th>
+                        </tr>
+                        </thead>
+                        <tbody id="rule-body"></tbody>
+                    </table>
+                </div>
+                <div class="pager">
+                    <button id="page-prev">◀ 上一页</button>
+                    <button id="page-next">下一页 ▶</button>
+                </div>
+            </div>
+
+            <!-- 右侧详情 -->
+            <div class="rule-detail box">
+                <div class="panel-head"><span>规则详情</span></div>
+                <div class="detail-scroll" id="rule-detail-body"><p class="muted">点击左侧列表中的规则查看详情</p></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 新增/修改弹窗 -->
+<div class="modal-mask" id="rule-modal">
+    <div class="modal">
+        <header id="rule-modal-title">新增规则</header>
+        <div class="modal-body">
+            <div class="form-grid">
+                <div class="field">
+                    <label>规则编号（如 GEN-001）</label>
+                    <input id="f-code" placeholder="GEN-001">
+                </div>
+                <div class="field">
+                    <label>规则名称 *</label>
+                    <input id="f-name" placeholder="Block名称不能为空">
+                </div>
+                <div class="field">
+                    <label>检测对象 *</label>
+                    <input id="f-target" list="target-options" placeholder="Block / Property / Connector">
+                    <datalist id="target-options"></datalist>
+                </div>
+                <div class="field">
+                    <label>适用范围</label>
+                    <input id="f-scope" placeholder="全部Block元素">
+                </div>
+                <div class="field">
+                    <label>严重程度</label>
+                    <select id="f-severity"></select>
+                </div>
+                <div class="field">
+                    <label>规则版本</label>
+                    <input id="f-version" placeholder="V1.0">
+                </div>
+                <div class="field full">
+                    <label>触发条件</label>
+                    <input id="f-condition" placeholder="名称为空 / element.name 为空">
+                </div>
+                <div class="field full">
+                    <label>结果信息（错误描述）</label>
+                    <input id="f-message" placeholder="Block名称不能为空">
+                </div>
+                <div class="field full">
+                    <label>修复建议</label>
+                    <input id="f-fix" placeholder="补充Block名称定义">
+                </div>
+                <div class="field full">
+                    <label>求解脚本（JavaScript：function main(element[, context])，支持 trim/toLowerCase/toUpperCase/charAt/indexOf/includes/startsWith/endsWith/split）</label>
+                    <textarea id="f-script" rows="8" placeholder="function main(element) { ... }"></textarea>
+                </div>
+                <div class="field full">
+                    <label class="checkbox-row">
+                        <input type="checkbox" id="f-enabled" checked> 启用该规则
+                    </label>
+                </div>
+            </div>
+        </div>
+        <footer>
+            <button id="btn-modal-cancel">取消</button>
+            <button id="btn-modal-save" class="primary">保存</button>
+        </footer>
+    </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/common.js"></script>
+<script src="js/rule.js"></script>
+</body>
+</html>

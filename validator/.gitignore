@@ -1,0 +1,22 @@
+# Java / Maven 构建产物
+target/
+*.log
+HELP.md
+
+# 运行时数据
+uploads/
+
+# IDE
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+.settings/
+.classpath
+.project
+
+# Maven Wrapper 发行包（首次运行 mvnw 时自动下载）
+.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/

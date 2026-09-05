@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SysML模型解析与校验系统 - 工作台</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="app">
+
+    <header class="topbar">
+        <div class="logo">🛡 SysML模型解析与校验系统 <small>工作台</small></div>
+        <nav class="topnav">
+            <a href="index.html" class="active">模型</a>
+            <a href="rule.html">规则</a>
+            <a href="result.html">结果</a>
+            <a href="tasks.html">任务</a>
+        </nav>
+        <span class="spacer" style="flex:1"></span>
+        <button id="btn-upload" class="small">📁 导入SysML模型</button>
+        <input type="file" id="file-input" accept=".xml" class="hidden">
+        <button id="btn-json" class="small">📋 粘贴解析JSON</button>
+        <button id="btn-save-task" class="small">💾 保存为任务</button>
+        <button id="btn-validate" class="small primary">▶ 开始校验</button>
+        <span class="user">admin</span>
+    </header>
+
+    <div class="page">
+
+        <!-- 主工作区：左树 / 中图 / 右结果 -->
+        <div class="workspace">
+
+            <!-- 左侧：模型结构 -->
+            <div class="left" id="left-panel">
+                <div class="box" style="flex:1;min-height:0;">
+                    <div class="panel-head">
+                        <span>模型结构</span>
+                        <span class="tools">
+                            <button class="icon-btn" id="btn-left-collapse" title="收起/展开">◀</button>
+                        </span>
+                    </div>
+                    <div id="left-body">
+                        <input class="search" id="tree-search" placeholder="搜索模型元素">
+                        <div class="tabs">
+                            <span class="active" data-ltab="tree">模型树</span>
+                            <span data-ltab="stats">统计</span>
+                            <span data-ltab="info">信息</span>
+                        </div>
+                        <div class="tree-wrap" id="tree-wrap"></div>
+                        <div class="tab-pane" id="ltab-stats" style="display:none;padding:6px 0;"></div>
+                        <div class="tab-pane" id="ltab-info" style="display:none;padding:6px 0;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="splitter-v" id="split-left" title="拖动调整左右边界"></div>
+
+            <!-- 中间：图查看器 -->
+            <div class="center" id="center-panel">
+                <div class="box" style="flex:1;min-height:0;">
+                    <div class="panel-head">
+                        <span id="viewer-title">图查看器 <span class="muted">点击左侧模型树中的图或元素查看</span></span>
+                        <span class="tools viewer-toolbar" style="border:none;height:auto;background:transparent;padding:0;">
+                            <button class="small" id="btn-zoom-in" title="放大">🔍+</button>
+                            <button class="small" id="btn-zoom-out" title="缩小">🔍−</button>
+                            <button class="small" id="btn-zoom-fit" title="适应窗口">⤢ 适应</button>
+                            <button class="small" id="btn-zoom-100" title="实际大小">100%</button>
+                            <span class="zoom-info" id="zoom-info"></span>
+                        </span>
+                    </div>
+                    <div class="viewer" id="viewer">
+                        <div class="empty-hint" id="viewer-empty">
+                            <div class="big">🗺</div>
+                            <div>从左侧模型树选择一个图或元素</div>
+                            <div class="muted">支持滚轮缩放、拖拽平移</div>
+                        </div>
+                        <div class="viewer-stage" id="viewer-stage" style="display:none">
+                            <img id="viewer-img" src="img/diagram.png" alt="模型图">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="splitter-v" id="split-right" title="拖动调整左右边界"></div>
+
+            <!-- 右侧：校验结果 -->
+            <div class="right" id="right-panel">
+                <div class="box" style="flex:1;min-height:0;">
+                    <div class="panel-head">
+                        <span>校验结果</span>
+                        <span class="tools">
+                            <button class="icon-btn" id="btn-right-collapse" title="收起/展开">▶</button>
+                        </span>
+                    </div>
+                    <div id="right-body">
+                        <div class="tabs">
+                            <span class="active" data-rtab="issues">校验结果</span>
+                            <span data-rtab="rules">规则命中</span>
+                            <span data-rtab="log">执行日志</span>
+                        </div>
+                        <div class="tab-pane active" id="rtab-issues">
+                            <div class="table-wrap">
+                                <table class="fixed">
+                                    <thead>
+                                    <tr>
+                                        <th style="width:52px">级别</th>
+                                        <th class="left">问题描述</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="issues-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div class="tab-pane" id="rtab-rules"></div>
+                        <div class="tab-pane" id="rtab-log"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部状态栏 -->
+        <div class="statusbar" id="statusbar">
+            <span class="chip" id="sb-model">模型：<b>-</b></span>
+            <span class="chip" id="sb-counts">元素 <b>0</b> · 关系 <b>0</b> · 图 <b>0</b> · 视图 <b>0</b></span>
+            <span class="spacer"></span>
+            <span class="chip" id="sb-sev"></span>
+            <span class="chip" id="sb-time"></span>
+        </div>
+    </div>
+</div>
+
+<!-- 粘贴解析 JSON 弹窗 -->
+<div class="modal-mask" id="json-modal">
+    <div class="modal">
+        <header>粘贴解析 JSON（ParsedModel 结构）</header>
+        <div class="modal-body">
+            <div class="toolbar-inline" style="margin-bottom:8px;">
+                <button id="modal-sample">📄 载入示例JSON</button>
+                <button id="modal-validate" class="primary">▶ 开始校验</button>
+                <button id="modal-validate-builtin">🔧 仅结构校验</button>
+            </div>
+            <textarea id="json-input" class="modal-json" spellcheck="false" placeholder='在此粘贴解析 JSON，例如：&#10;{&#10;  "id": "模型ID",&#10;  "source": { "fileName": "test1.xml", ... },&#10;  "elements": [...],&#10;  "relations": [...],&#10;  "diagrams": [...],&#10;  "views": [...],&#10;  "issues": [...],&#10;  "statistics": { ... }&#10;}'></textarea>
+        </div>
+        <footer>
+            <span class="muted" id="json-modal-hint"></span>
+            <button id="modal-close">关闭</button>
+        </footer>
+    </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/common.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

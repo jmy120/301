@@ -1,0 +1,89 @@
+### 健康检查
+GET http://localhost:8080/api/models/test
+
+### 仅内置结构校验（不依赖规则库）
+POST http://localhost:8080/api/models/validate/builtin
+Content-Type: application/json
+
+< sample/sample-parsed-model.json
+
+### 完整校验：内置结构校验 + 规则库中已启用规则
+POST http://localhost:8080/api/models/validate
+Content-Type: application/json
+
+< sample/sample-parsed-model.json
+
+### 分页查询规则列表（keyword / targetType / severity / enabled 可筛选）
+GET http://localhost:8080/api/rules?page=0&size=20
+
+### 规则可选值：严重程度 / 已用检测对象
+GET http://localhost:8080/api/rules/severities
+GET http://localhost:8080/api/rules/target-types
+
+### 新增规则示例：Block 必须有文档注释
+POST http://localhost:8080/api/rules
+Content-Type: application/json
+
+{
+  "ruleCode": "GEN-003",
+  "ruleName": "Block必须有注释",
+  "scope": "模型",
+  "targetType": "Block",
+  "condition": "documentation不能为空",
+  "severity": "WARNING",
+  "message": "Block元素建议补充文档注释",
+  "fixSuggestion": "为Block元素添加注释",
+  "ruleVersion": "1.0",
+  "script": "function main(element) {\n  if (element.documentation == null || element.documentation === \"\") {\n    return false;\n  }\n  return true;\n}"
+}
+
+### 启用/停用规则（enabled=true 启用，false 停用）
+PUT http://localhost:8080/api/rules/1/status
+Content-Type: application/json
+
+{
+  "enabled": false
+}
+
+### 更新 / 删除规则
+PUT http://localhost:8080/api/rules/1
+Content-Type: application/json
+
+{
+  "ruleCode": "GEN-003",
+  "ruleName": "Block必须有注释（改）",
+  "scope": "模型",
+  "targetType": "Block",
+  "condition": "documentation不能为空",
+  "severity": "WARNING",
+  "message": "Block元素建议补充文档注释",
+  "fixSuggestion": "为Block元素添加注释",
+  "ruleVersion": "1.0",
+  "script": "function main(element) {\n  if (element.documentation == null || element.documentation === \"\") {\n    return false;\n  }\n  return true;\n}"
+}
+
+DELETE http://localhost:8080/api/rules/1
+
+### 幂等初始化 40 条种子规则（仅补充缺失编号，不覆盖修改）
+POST http://localhost:8080/api/rules/init
+
+### 校验任务：创建 / 列表 / 详情 / 重跑 / 删除 / 报告
+POST http://localhost:8080/api/tasks
+Content-Type: application/json
+
+{
+  "taskName": "联调冒烟任务",
+  "modelName": "sample-parsed-model",
+  "modelJson": "{}",
+  "builtinOnly": false
+}
+
+GET http://localhost:8080/api/tasks?page=0&size=10
+GET http://localhost:8080/api/tasks/1
+POST http://localhost:8080/api/tasks/1/rerun
+DELETE http://localhost:8080/api/tasks/1
+
+### 导出报告：format=html（默认）/ docx(word) / json / csv
+GET http://localhost:8080/api/tasks/1/report?format=html
+GET http://localhost:8080/api/tasks/1/report?format=docx
+GET http://localhost:8080/api/tasks/1/report?format=json
