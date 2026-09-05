@@ -64,3 +64,33 @@
 - 新增 `Issue.stage = "parse"` 与 `ParsedModel.schemaVersion = "1.0.0"`，明确解析问题不与校验结果混用。
 - 本轮测试：基础解析和需求图测试通过；新增外部引用测试因测试样例未构造真实 MagicDraw `filePart/streamContentID` 结构而失败，需要调整测试样例；MagicDraw 2026 样例仍有跨 filePart 引用未纳入索引，以及未知元类集合过窄的问题。
 - 当前验证环境存在 Windows 权限限制，可能出现 `dist` 写入 `EPERM` 或测试子进程 `spawn EPERM`；静态类型检查曾通过。
+
+## 2026-09-05 工作记录（模型解析）
+
+### 本周完成
+
+- 修复普通小写 `diagram` 节点未被识别的问题，Diagram 内嵌的 View 可以正确进入解析结果。
+- 统一 View、MagicDraw `mdElement` 和关系端点中的 `file#id`、`PROJECT...?resource=...#id` 引用 ID。
+- 增加 `general`、`relatedElement` 关系端点别名；外部 profile/library 的 `href` 不再误报为当前模型内悬空引用。
+- 增加 Diagram/View 完整性诊断，检查根 View、Diagram 声明的 View 和 Edge/Link/Path 端点。
+- 增加无 BOM 的 UTF-16LE/UTF-16BE XML 启发式编码识别。
+- 导入请求体限制为 100 MB，超限时主动终止请求流。
+- 内存模型缓存限制为 20 个模型，30 分钟未访问自动清理。
+- 在 `ParsedModel.extensions` 中结构化保留未知扩展节点，并同步更新 Schema。
+- 修复根 `Model` 被 XML 包装节点错误赋予 `generated-*` owner 的问题。
+- 使用当前解析器解析 `E:\301\test1.xml`，生成未纳入仓库的测试产物 `E:\301\test1.parsed.js`。
+
+### 验证结果
+
+- `npm test`：10/10 通过。
+- `npm run build`：通过。
+- `test1.xml` 解析结果：855 个元素、430 个关系、54 个 Diagram、711 个 View、0 个悬空引用、0 个重复 ID。
+- `test1.parsed.js` 已验证可通过 ES module `import` 正常加载。
+
+### 尚未解决的问题
+
+1. `test1.xml` 仍产生 297 条 `UNKNOWN_METACLASS` 警告，主要是 MagicDraw 图形扩展节点，例如 `diagramContents`、`binaryObject`。这些节点已保留在 `extensions`，但尚未建立专用适配器或白名单。
+2. `owner`/`namespace` 当前只取一个规范化引用；多值、跨文件和共享模型的归属语义仍需明确后适配。
+3. Edge 端点检查当前覆盖直接属性引用；MagicDraw 不同版本可能将端点写在不同的嵌套节点中，需要更多真实样例补齐。
+4. 无 BOM UTF-16 采用启发式检测，罕见的二进制前缀或特殊 XML 声明仍需更严格的处理。
+5. 缓存使用进程内存，服务重启后导入模型不保留；长期查询或多人共享需要后续接入持久化存储。
