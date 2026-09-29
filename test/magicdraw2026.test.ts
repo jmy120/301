@@ -14,10 +14,15 @@ test('adapts MagicDraw 2026 XMI semantic model and diagrams', async () => {
   assert.ok(result.views.length > 100);
   assert.ok(result.views.some(x => x.bounds && x.modelElementId));
   assert.ok(result.diagrams.some(x => x.viewIds.length > 0));
+  const objects = new Set([...result.elements, ...result.relations].map(x => x.id));
+  assert.ok(result.diagrams.every(x => !x.ownerId || objects.has(x.ownerId)));
   assert.equal(result.statistics.duplicateIds, 0);
   assert.equal(result.statistics.danglingReferences, 0);
   assert.equal(result.issues.filter(x => x.code === 'MISSING_NAME').length, 0);
   assert.equal(result.issues.filter(x => x.code === 'UNSUPPORTED_ROOT').length, 0);
+  assert.equal(result.relations.filter(x => x.relationOrigin === 'diagram').length, 190);
+  assert.equal(result.views.filter(x => x.presentationKind === 'diagram-structure').length, 138);
+  assert.equal(result.views.filter(x => x.modelElementScope === 'diagram').length, 55);
 });
 
 test('adapts MagicDraw requirement-diagram containment links', async () => {

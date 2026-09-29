@@ -1,6 +1,6 @@
 # 模型校验模块（validator · Java / Spring Boot）
 
-校验模块接收解析模块输出的 `ParsedModel v1.0.0` JSON，执行「内置结构校验 + 合同约定的 40 条模型质量规则」，返回可落库、可导出的校验结果，并附带一套可直接运行的 Web 前端（工作台 / 规则配置 / 校验任务与报告）。
+校验模块接收解析模块输出的 `ParsedModel v1.1.0` JSON，执行「内置结构校验 + 合同约定的 40 条模型质量规则」，返回可落库、可导出的校验结果，并附带一套可直接运行的 Web 前端（工作台 / 规则配置 / 校验任务与报告）。关系必须通过 `relationOrigin` 区分语义关系与图形连线；视图必须通过 `presentationKind` 和 `modelElementScope` 判断展示性质与绑定目标。
 
 本目录是一个**独立 Maven / Spring Boot 工程**，与仓库根目录的 Node.js 解析器互不依赖：共用同一个 Git 仓库、同一份 ParsedModel 契约，但不共享运行时。
 

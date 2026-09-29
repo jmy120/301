@@ -20,4 +20,14 @@ curl.exe -X POST --data-binary "@examples/sample.sysml.xml" -H "Content-Type: ap
 
 接口：`POST /api/models/import`、`GET /api/models/{id}/tree`、`GET /api/diagrams/{id}`、`GET /api/elements/{id}`。
 
+导出供校验模块直接导入的 ES module：
+
+```powershell
+npm run parse -- examples/sample.sysml.xml output/sample.parsed.js
+```
+
+生成文件同时提供默认导出和具名导出 `parsedModel`。导入服务端模型后，也可请求 `GET /api/models/{id}/export.js` 下载同一格式的文件。
+
+校验模块的用例图和顺序图回归样本位于 `examples/use-case-sequence.parsed-model.sample.json`，其中包含 Actor、UseCase、Include、Interaction、Lifeline 与 Message，以及对应的 Use Case Diagram 和 Sequence Diagram 视图。
+
 当前实现采用通用 XMI 属性别名与元类识别；拿到真实 MagicDraw 导出样本后，应在 `src/adapter.ts` 增加版本专用别名/路径适配器。
