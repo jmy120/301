@@ -25,6 +25,8 @@ export interface ModelElement {
 }
 
 export interface Relation extends ModelElement {
+  /** Whether this is a UML/SysML relation or an edge reconstructed from a diagram. */
+  relationOrigin: 'semantic' | 'diagram';
   kind: string;
   sourceId?: string;
   targetId?: string;
@@ -45,6 +47,10 @@ export interface View {
   id: string;
   diagramId: string;
   modelElementId?: string;
+  /** Collection containing modelElementId when the reference is available. */
+  modelElementScope?: 'element' | 'relation' | 'diagram' | 'external' | 'unresolved';
+  /** A drawable node/edge, or a structural record describing the diagram itself. */
+  presentationKind: 'graphic' | 'diagram-structure';
   kind: string;
   bounds?: string;
   waypoints?: string;
@@ -62,7 +68,7 @@ export interface ExtensionNode {
 }
 
 export interface ParsedModel {
-  schemaVersion: '1.0.0';
+  schemaVersion: '1.1.0';
   id: string;
   source: { fileName: string; encoding: string; xmiVersion?: string; productVersion?: string };
   elements: ModelElement[];
@@ -70,6 +76,14 @@ export interface ParsedModel {
   diagrams: Diagram[];
   views: View[];
   extensions?: ExtensionNode[];
+  indexes?: Indexes;
   issues: Issue[];
   statistics: { elements: number; relations: number; diagrams: number; views: number; danglingReferences: number; duplicateIds: number };
+}
+
+export interface Indexes {
+  /** Exported XML IDs grouped by MagicDraw filePart name. */
+  idsByFilePart: Record<string, string[]>;
+  /** References outside the imported model; these are not local dangling references. */
+  externalReferences: Array<{ href: string; file?: string; id: string }>;
 }

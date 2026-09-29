@@ -1,11 +1,11 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://sysml-parser.local/schema/parsed-model-1.0.0.json",
-  "title": "ParsedModel v1.0.0",
+  "$id": "https://sysml-parser.local/schema/parsed-model-1.1.0.json",
+  "title": "ParsedModel v1.1.0",
   "type": "object",
   "required": ["schemaVersion", "id", "source", "elements", "relations", "diagrams", "views", "issues", "statistics"],
   "properties": {
-    "schemaVersion": {"const": "1.0.0"},
+    "schemaVersion": {"const": "1.1.0"},
     "id": {"type": "string", "minLength": 1},
     "source": {
       "type": "object",
@@ -40,16 +40,16 @@
       "additionalProperties": false
     },
     "relation": {
-      "allOf": [{"$ref": "#/$defs/modelElement"}, {"type": "object", "required": ["kind", "endIds"], "properties": {
-        "kind": {"type": "string"}, "sourceId": {"type": "string"}, "targetId": {"type": "string"}, "sourceIds": {"type": "array", "items": {"type": "string"}}, "targetIds": {"type": "array", "items": {"type": "string"}}, "endIds": {"type": "array", "items": {"type": "string"}}, "direction": {"type": "string"}
+      "allOf": [{"$ref": "#/$defs/modelElement"}, {"type": "object", "required": ["kind", "relationOrigin", "endIds"], "properties": {
+        "kind": {"type": "string"}, "relationOrigin": {"enum": ["semantic", "diagram"]}, "sourceId": {"type": "string"}, "targetId": {"type": "string"}, "sourceIds": {"type": "array", "items": {"type": "string"}}, "targetIds": {"type": "array", "items": {"type": "string"}}, "endIds": {"type": "array", "items": {"type": "string"}}, "direction": {"type": "string"}
       }, "additionalProperties": false}]
     },
     "diagram": {
       "allOf": [{"$ref": "#/$defs/modelElement"}, {"type": "object", "required": ["type", "viewIds"], "properties": {"type": {"type": "string"}, "rootViewId": {"type": "string"}, "imageRef": {"type": "string"}, "viewIds": {"type": "array", "items": {"type": "string"}}}, "additionalProperties": false}]
     },
     "view": {
-      "type": "object", "required": ["id", "diagramId", "kind", "style", "sourceXPath"],
-      "properties": {"id": {"type": "string"}, "diagramId": {"type": "string"}, "modelElementId": {"type": "string"}, "kind": {"type": "string"}, "bounds": {"type": "string"}, "waypoints": {"type": "string"}, "label": {"type": "string"}, "style": {"type": "object", "additionalProperties": {"type": "string"}}, "sourceXPath": {"type": "string"}},
+      "type": "object", "required": ["id", "diagramId", "presentationKind", "kind", "style", "sourceXPath"],
+      "properties": {"id": {"type": "string"}, "diagramId": {"type": "string"}, "modelElementId": {"type": "string"}, "modelElementScope": {"enum": ["element", "relation", "diagram", "external", "unresolved"]}, "presentationKind": {"enum": ["graphic", "diagram-structure"]}, "kind": {"type": "string"}, "bounds": {"type": "string"}, "waypoints": {"type": "string"}, "label": {"type": "string"}, "style": {"type": "object", "additionalProperties": {"type": "string"}}, "sourceXPath": {"type": "string"}},
       "additionalProperties": false
     },
     "extensionNode": {
@@ -63,6 +63,6 @@
       "additionalProperties": false
     },
     "statistics": {"type": "object", "required": ["elements", "relations", "diagrams", "views", "danglingReferences", "duplicateIds"], "properties": {"elements": {"type": "integer", "minimum": 0}, "relations": {"type": "integer", "minimum": 0}, "diagrams": {"type": "integer", "minimum": 0}, "views": {"type": "integer", "minimum": 0}, "danglingReferences": {"type": "integer", "minimum": 0}, "duplicateIds": {"type": "integer", "minimum": 0}}, "additionalProperties": false},
-    "indexes": {"type": "object"}
+    "indexes": {"type": "object", "required": ["idsByFilePart", "externalReferences"], "properties": {"idsByFilePart": {"type": "object", "additionalProperties": {"type": "array", "items": {"type": "string"}}}, "externalReferences": {"type": "array", "items": {"type": "object", "required": ["href", "id"], "properties": {"href": {"type": "string"}, "file": {"type": "string"}, "id": {"type": "string"}}, "additionalProperties": false}}}, "additionalProperties": false}
   }
 }

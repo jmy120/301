@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "1.1.0",
+  "id": "use-case-sequence-sample-001",
+  "source": { "fileName": "use-case-sequence.fixture", "encoding": "UTF-8" },
+  "elements": [
+    { "id": "model", "metaClass": "uml:Model", "name": "Example Model", "childrenIds": ["actor", "login", "authenticate", "interaction", "lifeline-a", "lifeline-b"], "stereotypes": [], "attributes": {}, "sourceXPath": "/fixture/model" },
+    { "id": "actor", "metaClass": "uml:Actor", "name": "Operator", "ownerId": "model", "childrenIds": [], "stereotypes": [], "attributes": {}, "sourceXPath": "/fixture/actor" },
+    { "id": "login", "metaClass": "uml:UseCase", "name": "Log in", "ownerId": "model", "childrenIds": [], "stereotypes": [], "attributes": {}, "sourceXPath": "/fixture/login" },
+    { "id": "authenticate", "metaClass": "uml:UseCase", "name": "Authenticate", "ownerId": "model", "childrenIds": [], "stereotypes": [], "attributes": {}, "sourceXPath": "/fixture/authenticate" },
+    { "id": "interaction", "metaClass": "uml:Interaction", "name": "Login sequence", "ownerId": "model", "childrenIds": ["lifeline-a", "lifeline-b"], "stereotypes": [], "attributes": {}, "sourceXPath": "/fixture/interaction" },
+    { "id": "lifeline-a", "metaClass": "uml:Lifeline", "name": "Operator", "ownerId": "interaction", "childrenIds": [], "stereotypes": [], "attributes": {}, "sourceXPath": "/fixture/lifeline[1]" },
+    { "id": "lifeline-b", "metaClass": "uml:Lifeline", "name": "Auth service", "ownerId": "interaction", "childrenIds": [], "stereotypes": [], "attributes": {}, "sourceXPath": "/fixture/lifeline[2]" }
+  ],
+  "relations": [
+    { "id": "association", "metaClass": "uml:Association", "kind": "uml:Association", "relationOrigin": "semantic", "ownerId": "model", "childrenIds": [], "stereotypes": [], "attributes": {}, "sourceXPath": "/fixture/association", "sourceId": "actor", "targetId": "login", "sourceIds": ["actor"], "targetIds": ["login"], "endIds": [] },
+    { "id": "include", "metaClass": "uml:Include", "kind": "uml:Include", "relationOrigin": "semantic", "ownerId": "model", "childrenIds": [], "stereotypes": [], "attributes": {}, "sourceXPath": "/fixture/include", "sourceId": "login", "targetId": "authenticate", "sourceIds": ["login"], "targetIds": ["authenticate"], "endIds": [] },
+    { "id": "message", "metaClass": "uml:Message", "kind": "uml:Message", "relationOrigin": "semantic", "ownerId": "interaction", "childrenIds": [], "stereotypes": [], "attributes": {}, "sourceXPath": "/fixture/message", "sourceId": "lifeline-a", "targetId": "lifeline-b", "sourceIds": ["lifeline-a"], "targetIds": ["lifeline-b"], "endIds": [] }
+  ],
+  "diagrams": [
+    { "id": "use-diagram", "metaClass": "uml:Diagram", "type": "Use Case Diagram", "name": "Login use cases", "ownerId": "model", "childrenIds": [], "stereotypes": [], "attributes": {}, "sourceXPath": "/fixture/useDiagram", "viewIds": ["actor-view", "login-view", "authenticate-view", "include-view"] },
+    { "id": "sequence-diagram", "metaClass": "uml:Diagram", "type": "Sequence Diagram", "name": "Login sequence", "ownerId": "interaction", "childrenIds": [], "stereotypes": [], "attributes": {}, "sourceXPath": "/fixture/sequenceDiagram", "viewIds": ["lifeline-a-view", "lifeline-b-view", "message-view"] }
+  ],
+  "views": [
+    { "id": "actor-view", "diagramId": "use-diagram", "modelElementId": "actor", "modelElementScope": "element", "presentationKind": "graphic", "kind": "Actor", "style": {}, "sourceXPath": "/fixture/actorView" },
+    { "id": "login-view", "diagramId": "use-diagram", "modelElementId": "login", "modelElementScope": "element", "presentationKind": "graphic", "kind": "UseCase", "style": {}, "sourceXPath": "/fixture/loginView" },
+    { "id": "authenticate-view", "diagramId": "use-diagram", "modelElementId": "authenticate", "modelElementScope": "element", "presentationKind": "graphic", "kind": "UseCase", "style": {}, "sourceXPath": "/fixture/authenticateView" },
+    { "id": "include-view", "diagramId": "use-diagram", "modelElementId": "include", "modelElementScope": "relation", "presentationKind": "graphic", "kind": "Include", "style": {}, "sourceXPath": "/fixture/includeView" },
+    { "id": "lifeline-a-view", "diagramId": "sequence-diagram", "modelElementId": "lifeline-a", "modelElementScope": "element", "presentationKind": "graphic", "kind": "Lifeline", "style": {}, "sourceXPath": "/fixture/lifelineAView" },
+    { "id": "lifeline-b-view", "diagramId": "sequence-diagram", "modelElementId": "lifeline-b", "modelElementScope": "element", "presentationKind": "graphic", "kind": "Lifeline", "style": {}, "sourceXPath": "/fixture/lifelineBView" },
+    { "id": "message-view", "diagramId": "sequence-diagram", "modelElementId": "message", "modelElementScope": "relation", "presentationKind": "graphic", "kind": "Message", "style": {}, "sourceXPath": "/fixture/messageView" }
+  ],
+  "indexes": { "idsByFilePart": {}, "externalReferences": [] },
+  "issues": [],
+  "statistics": { "elements": 7, "relations": 3, "diagrams": 2, "views": 7, "danglingReferences": 0, "duplicateIds": 0 }
+}

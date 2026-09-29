@@ -1,6 +1,6 @@
 # 校验模块开发人员 Git 对接指南
 
-本指南面向第一次使用 Git 的开发人员。你的工作是开发 `validator/` 校验模块，消费解析模块输出的 `ParsedModel v1.0.0`，不需要直接读取或解析 XML。
+本指南面向第一次使用 Git 的开发人员。你的工作是开发 `validator/` 校验模块，消费解析模块输出的 `ParsedModel v1.1.0`，不需要直接读取或解析 XML。
 
 ## 一、准备工作
 
@@ -48,7 +48,7 @@ validator/
 
 校验模块：
 
-- 输入：`ParsedModel v1.0.0`；
+- 输入：`ParsedModel v1.1.0`；
 - 输出：独立的校验结果，建议标记 `stage: "validate"`；
 - 执行：合同约定的 40 条业务规则；
 - 不直接读取 XML/XMI；
