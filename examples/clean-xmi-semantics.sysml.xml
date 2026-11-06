@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xmi:XMI xmlns:xmi="http://www.omg.org/spec/XMI/20131001" xmlns:uml="http://www.omg.org/spec/UML/20131001" xmlns:s="http://www.omg.org/spec/SysML/20181001/SysML">
+  <uml:Model xmi:id="model" name="Clean XMI regression">
+    <packagedElement xmi:type="uml:Class" xmi:id="type" name="Device">
+      <ownedAttribute xmi:id="feature" name="level"/>
+      <ownedAttribute xmi:type="uml:Port" xmi:id="port"/>
+      <ownedOperation xmi:id="operation" name="update"><method xmi:idref="activity"/></ownedOperation>
+    </packagedElement>
+    <packagedElement xmi:type="uml:AssociationClass" xmi:id="joint" name="Joint">
+      <memberEnd xmi:idref="end-a"/><memberEnd xmi:idref="end-b"/>
+      <ownedEnd xmi:id="end-a" type="type"/>
+      <ownedEnd xmi:id="end-b"><type href="types.uml#RemoteType"/></ownedEnd>
+      <ownedAttribute xmi:id="stiffness" name="stiffness"/>
+      <ownedOperation xmi:id="joint-op" name="calculate"/>
+      <ownedRule xmi:id="joint-rule"><specification xmi:type="uml:OpaqueExpression" xmi:id="joint-expr"><body>k &gt; 0</body></specification></ownedRule>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Activity" xmi:id="activity" name="Update">
+      <node xmi:type="uml:CallOperationAction" xmi:id="call" operation="operation">
+        <target xmi:type="uml:InputPin" xmi:id="call-target"/>
+        <argument xmi:type="uml:InputPin" xmi:id="arg"/>
+        <result xmi:type="uml:OutputPin" xmi:id="out"/>
+      </node>
+      <node xmi:type="uml:SendSignalAction" xmi:id="send" signal="signal"><target xmi:type="uml:InputPin" xmi:id="signal-target"/></node>
+      <node xmi:type="uml:ReadSelfAction" xmi:id="self"><result xmi:type="uml:OutputPin" xmi:id="self-out"/></node>
+      <node xmi:type="uml:ReadStructuralFeatureAction" xmi:id="read" structuralFeature="feature"><object xmi:type="uml:InputPin" xmi:id="read-object"/></node>
+      <node xmi:type="uml:AddStructuralFeatureValueAction" xmi:id="write" structuralFeature="feature"><value xmi:type="uml:InputPin" xmi:id="write-value"/><insertAt xmi:type="uml:InputPin" xmi:id="position"/></node>
+      <node xmi:type="uml:ClearStructuralFeatureAction" xmi:id="clear" structuralFeature="feature"/>
+      <node xmi:type="uml:CreateObjectAction" xmi:id="create" classifier="type"/>
+      <node xmi:type="uml:ValueSpecificationAction" xmi:id="constant"><value xmi:type="uml:LiteralString" xmi:id="constant-value" value="001"/></node>
+      <edge xmi:type="uml:ObjectFlow" xmi:id="flow" source="out" target="call-target"><weight xmi:type="uml:LiteralInteger" xmi:id="weight" value="1"/></edge>
+      <edge xmi:type="uml:ObjectFlow" xmi:id="signal-flow"><source xmi:idref="out"/><target xmi:idref="signal-target"/></edge>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Signal" xmi:id="signal" name="UpdateSignal"/>
+    <packagedElement xmi:type="uml:InformationFlow" xmi:id="information" name="Payload">
+      <informationSource xmi:idref="port"/><informationTarget href="external.uml#port"/>
+      <conveyed xmi:idref="type"/><realizingConnector xmi:idref="connector"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Connector" xmi:id="connector"/>
+    <packagedElement xmi:type="uml:InstanceSpecification" xmi:id="instance" name="device1">
+      <classifier href="types.uml#Device"/>
+      <slot xmi:id="slot"><definingFeature href="types.uml#level"/><value xmi:type="uml:InstanceValue" xmi:id="instance-value"><instance xmi:idref="instance"/></value></slot>
+      <slot xmi:id="inline-slot" definingFeature="feature"><value xmi:type="uml:LiteralString" value="002"/></slot>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Interaction" xmi:id="interaction" name="Scenario">
+      <lifeline xmi:id="line" name="device"/>
+      <fragment xmi:type="uml:InteractionUse" xmi:id="reuse"><covered xmi:idref="line"/><refersTo href="scenarios.uml#subscenario"/></fragment>
+    </packagedElement>
+    <packagedElement xmi:type="uml:TimeEvent" xmi:id="timer"><when xmi:type="uml:TimeExpression" xmi:id="time"><expr xmi:type="uml:LiteralString" xmi:id="time-value" value="dt s"/></when></packagedElement>
+  </uml:Model>
+  <s:Block xmi:id="joint-block" base_Class="joint"/>
+  <s:ItemFlow xmi:id="item-flow" base_InformationFlow="information"/>
+</xmi:XMI>

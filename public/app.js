@@ -16,8 +16,9 @@ $('file').addEventListener('change', async event => {
 
 function renderTree() {
   const model = state.model; const byParent = new Map();
-  const ids = new Set(model.elements.map(element => element.id));
-  for (const element of model.elements) {
+  const classifiers = [...model.elements, ...model.relations.filter(r => r.metaClass.split(':').pop() === 'AssociationClass')];
+  const ids = new Set(classifiers.map(element => element.id));
+  for (const element of classifiers) {
     // XML/XMI wrapper nodes are deliberately not exposed as model elements;
     // their children therefore belong at the visible tree root.
     const parent = element.ownerId && ids.has(element.ownerId) ? element.ownerId : '';

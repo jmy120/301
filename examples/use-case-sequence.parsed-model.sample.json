@@ -1,5 +1,5 @@
 {
-  "schemaVersion": "1.1.0",
+  "schemaVersion": "1.2.0",
   "id": "use-case-sequence-sample-001",
   "source": { "fileName": "use-case-sequence.fixture", "encoding": "UTF-8" },
   "elements": [
