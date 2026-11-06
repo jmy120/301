@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xmi:XMI xmlns:xmi="http://www.omg.org/spec/XMI/20131001"
+         xmlns:uml="http://www.omg.org/spec/UML/20131001"
+         xmlns:Blocks="http://example.org/sysml/blocks"
+         xmlns:Requirements="http://example.org/sysml/requirements"
+         xmlns:Constraints="http://example.org/sysml/constraints">
+  <!-- Synthetic regression model; IDs are deliberately readable. -->
+  <uml:Model xmi:id="model" name="NineDiagramExample">
+    <packagedElement xmi:type="uml:Package" xmi:id="system" name="System">
+      <!-- Block definition / internal block diagrams -->
+      <packagedElement xmi:type="uml:Class" xmi:id="motor" name="Motor">
+        <ownedAttribute xmi:id="speed" name="speed" type="real"/>
+        <ownedAttribute xmi:type="uml:Port" xmi:id="motor-port" name="power"/>
+      </packagedElement>
+      <packagedElement xmi:type="uml:Class" xmi:id="controller" name="Controller">
+        <ownedAttribute xmi:type="uml:Port" xmi:id="controller-port" name="output"/>
+      </packagedElement>
+      <packagedElement xmi:type="uml:DataType" xmi:id="real" name="Real"/>
+      <packagedElement xmi:type="uml:Class" xmi:id="drive" name="Drive">
+        <ownedAttribute xmi:id="motor-part" name="motor" type="motor"/>
+        <ownedAttribute xmi:id="controller-part" name="controller" type="controller"/>
+        <generalization xmi:id="inherits-motor" general="motor"/>
+        <ownedConnector xmi:id="power-wire">
+          <end xmi:id="power-source" role="controller-port" partWithPort="controller-part"/>
+          <end xmi:id="power-target" role="motor-port" partWithPort="motor-part"/>
+        </ownedConnector>
+      </packagedElement>
+      <packagedElement xmi:type="uml:Association" xmi:id="association" memberEnd="association-a association-b">
+        <ownedEnd xmi:id="association-a" type="motor"/>
+        <ownedEnd xmi:id="association-b" type="controller"/>
+      </packagedElement>
+
+      <!-- Requirement diagram: payload lives on the stereotype application. -->
+      <packagedElement xmi:type="uml:Class" xmi:id="speed-requirement" name="SpeedRequirement"/>
+      <packagedElement xmi:type="uml:Dependency" xmi:id="satisfy-speed" client="drive" supplier="speed-requirement"/>
+
+      <!-- Parametric diagram: properties bound by a stereotyped UML Connector. -->
+      <packagedElement xmi:type="uml:Class" xmi:id="speed-constraint" name="SpeedConstraint">
+        <ownedAttribute xmi:id="constraint-input" name="input" type="real"/>
+      </packagedElement>
+      <packagedElement xmi:type="uml:Class" xmi:id="analysis" name="SpeedAnalysis">
+        <ownedAttribute xmi:id="constraint-property" name="constraint" type="speed-constraint"/>
+        <ownedConnector xmi:id="speed-binding">
+          <end xmi:id="binding-a" role="speed"/>
+          <end xmi:id="binding-b" role="constraint-input" partWithPort="constraint-property"/>
+        </ownedConnector>
+      </packagedElement>
+
+      <!-- Use case diagram -->
+      <packagedElement xmi:type="uml:Actor" xmi:id="operator" name="Operator"/>
+      <packagedElement xmi:type="uml:UseCase" xmi:id="start" name="Start">
+        <include xmi:id="include-check" addition="check"/>
+        <extend xmi:id="extend-stop"><extendedCase xmi:idref="stop"/></extend>
+      </packagedElement>
+      <packagedElement xmi:type="uml:UseCase" xmi:id="check" name="Check"/>
+      <packagedElement xmi:type="uml:UseCase" xmi:id="stop" name="Stop"/>
+
+      <!-- Activity diagram: polymorphic nodes still have explicit types. -->
+      <packagedElement xmi:type="uml:Activity" xmi:id="activity" name="Control">
+        <node xmi:type="uml:InitialNode" xmi:id="initial"/>
+        <node xmi:type="uml:DecisionNode" xmi:id="decision"/>
+        <node xmi:type="uml:MergeNode" xmi:id="merge"/>
+        <node xmi:type="uml:ForkNode" xmi:id="fork"/>
+        <node xmi:type="uml:JoinNode" xmi:id="join"/>
+        <edge xmi:type="uml:ControlFlow" xmi:id="control-flow" source="initial" target="decision"/>
+      </packagedElement>
+
+      <!-- Sequence diagram -->
+      <packagedElement xmi:type="uml:Interaction" xmi:id="interaction" name="StartSequence">
+        <lifeline xmi:id="operator-line" name="operator"/>
+        <lifeline xmi:id="controller-line" name="controller"/>
+        <fragment xmi:type="uml:MessageOccurrenceSpecification" xmi:id="send" covered="operator-line"/>
+        <fragment xmi:type="uml:MessageOccurrenceSpecification" xmi:id="receive" covered="controller-line"/>
+        <message xmi:id="start-message" name="start" sendEvent="send" receiveEvent="receive"/>
+      </packagedElement>
+
+      <!-- State machine diagram -->
+      <packagedElement xmi:type="uml:StateMachine" xmi:id="state-machine" name="DriveState">
+        <region xmi:id="region">
+          <subvertex xmi:type="uml:State" xmi:id="idle" name="Idle"/>
+          <subvertex xmi:type="uml:State" xmi:id="running" name="Running"/>
+          <transition xmi:id="start-transition" source="idle" target="running">
+            <guard xmi:id="start-guard" name="CanStart"/>
+          </transition>
+        </region>
+      </packagedElement>
+
+      <!-- Package diagram -->
+      <packageImport xmi:id="import-library"><importedPackage xmi:idref="library"/></packageImport>
+      <packageMerge xmi:id="merge-base" mergedPackage="base"/>
+
+      <diagram xmi:id="bdd" diagramType="SysML Block Definition Diagram" name="Blocks"/>
+      <diagram xmi:id="ibd" diagramType="SysML Internal Block Diagram" name="Wiring">
+        <shape xmi:id="controller-view" modelElement="controller"/>
+        <shape xmi:id="motor-view" modelElement="motor"/>
+        <edge xmi:id="wire-view" modelElement="power-wire" sourceView="#controller-view">
+          <endpoint><targetView xmi:idref="motor-view"/></endpoint>
+        </edge>
+      </diagram>
+      <diagram xmi:id="req" diagramType="SysML Requirement Diagram" name="Requirements"/>
+      <diagram xmi:id="par" diagramType="SysML Parametric Diagram" name="Constraints"/>
+      <diagram xmi:id="uc" diagramType="SysML Use Case Diagram" name="UseCases"/>
+      <diagram xmi:id="act" diagramType="SysML Activity Diagram" name="Activities"/>
+      <diagram xmi:id="seq" diagramType="SysML Sequence Diagram" name="Sequence"/>
+      <diagram xmi:id="stm" diagramType="SysML State Machine Diagram" name="States"/>
+      <diagram xmi:id="pkg" diagramType="SysML Package Diagram" name="Packages"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Package" xmi:id="library" name="Library"/>
+    <packagedElement xmi:type="uml:Package" xmi:id="base" name="Base"/>
+  </uml:Model>
+  <Blocks:Block xmi:id="motor-block" base_Class="motor"/>
+  <Blocks:Block xmi:id="drive-block" base_Class="#drive"/>
+  <Requirements:Requirement xmi:id="requirement-application" base_Class="speed-requirement" Id="REQ-001" Text="Speed shall be limited."/>
+  <Requirements:Satisfy xmi:id="satisfy-application" base_Dependency="satisfy-speed"/>
+  <Constraints:ConstraintBlock xmi:id="constraint-application" base_Class="speed-constraint"/>
+  <Constraints:BindingConnector xmi:id="binding-application" base_Connector="speed-binding"/>
+</xmi:XMI>

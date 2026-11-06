@@ -1,6 +1,6 @@
 // Generated from sample.sysml.xml for JavaScript consumer smoke tests.
 export const parsedModel = {
-  schemaVersion: '1.1.0',
+  schemaVersion: '1.2.0',
   id: 'sample-parsed-001',
   source: { fileName: 'sample.sysml.xml', encoding: 'UTF-8', xmiVersion: '2.5', productVersion: 'MagicDraw 2024x' },
   elements: [

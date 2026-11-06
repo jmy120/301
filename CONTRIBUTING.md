@@ -7,7 +7,7 @@
 - `schema/`：解析输出接口 Schema；
 - `examples/`：脱敏 XML 和 ParsedModel JSON 样例。
 
-解析模块输出 `ParsedModel v1.0.0`。校验模块只消费该对象，不直接读取 XML，也不依赖解析器内部实现。接口变更必须同时更新 Schema、样例和文档。
+解析模块输出 `ParsedModel v1.2.0`。校验模块只消费该对象，不直接读取 XML，也不依赖解析器内部实现。接口变更必须同时更新 Schema、样例和文档。
 
 ## 分支与提交
 

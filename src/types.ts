@@ -21,18 +21,28 @@ export interface ModelElement {
   childrenIds: string[];
   stereotypes: string[];
   attributes: Record<string, string>;
+  /** XML feature name/path -> local IDs or original external URI tokens. */
+  references?: Record<string, string[]>;
+  /** XML feature name/path -> ordered text values, without lexical coercion. */
+  textValues?: Record<string, string[]>;
   sourceXPath: string;
 }
 
 export interface Relation extends ModelElement {
+  /** AssociationClass retains its classifier features here alongside association endpoints. */
   /** Whether this is a UML/SysML relation or an edge reconstructed from a diagram. */
   relationOrigin: 'semantic' | 'diagram';
   kind: string;
   sourceId?: string;
   targetId?: string;
   endIds: string[];
+  /** Connector/association end role IDs when serialized separately from ends. */
+  roleIds?: string[];
   sourceIds?: string[];
   targetIds?: string[];
+  /** Locally resolved lifelines covered by Message endpoint occurrences. */
+  sourceLifelineIds?: string[];
+  targetLifelineIds?: string[];
   direction?: string;
 }
 
@@ -47,6 +57,8 @@ export interface View {
   id: string;
   diagramId: string;
   modelElementId?: string;
+  sourceViewId?: string;
+  targetViewId?: string;
   /** Collection containing modelElementId when the reference is available. */
   modelElementScope?: 'element' | 'relation' | 'diagram' | 'external' | 'unresolved';
   /** A drawable node/edge, or a structural record describing the diagram itself. */
@@ -64,11 +76,13 @@ export interface ExtensionNode {
   tag: string;
   metaClass: string;
   attributes: Record<string, string>;
+  references?: Record<string, string[]>;
+  textValues?: Record<string, string[]>;
   sourceXPath: string;
 }
 
 export interface ParsedModel {
-  schemaVersion: '1.1.0';
+  schemaVersion: '1.2.0';
   id: string;
   source: { fileName: string; encoding: string; xmiVersion?: string; productVersion?: string };
   elements: ModelElement[];

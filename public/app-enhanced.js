@@ -24,8 +24,9 @@ $('file').addEventListener('change', async event => {
 });
 
 function renderTree() {
-  const byParent = new Map(), ids = new Set(state.model.elements.map(x => x.id));
-  for (const item of state.model.elements) { const p = item.ownerId && ids.has(item.ownerId) ? item.ownerId : ''; (byParent.get(p) ?? byParent.set(p, []).get(p)).push(item); }
+  const classifiers = [...state.model.elements, ...state.model.relations.filter(r => r.metaClass.split(':').pop() === 'AssociationClass')];
+  const byParent = new Map(), ids = new Set(classifiers.map(x => x.id));
+  for (const item of classifiers) { const p = item.ownerId && ids.has(item.ownerId) ? item.ownerId : ''; (byParent.get(p) ?? byParent.set(p, []).get(p)).push(item); }
   const draw = (p, d = 0) => (byParent.get(p) ?? []).map(x => `<button class="indent" style="padding-left:${8 + d * 16}px" data-element="${esc(x.id)}">${x.childrenIds.length ? '▾' : '·'} ${esc(x.name ?? x.metaClass.replace('uml:', ''))}</button>${draw(x.id, d + 1)}`).join('');
   $('tree').innerHTML = draw('') || '<p>没有可显示的顶层元素</p>';
   document.querySelectorAll('[data-element]').forEach(n => n.addEventListener('click', () => selectElement(n.dataset.element)));

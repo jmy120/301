@@ -56,6 +56,62 @@ test('labels view targets and presentation records explicitly', () => {
 test('labels views targeting indexed external references explicitly', () => {
   const result = parseSysmlXml('<xmi:XMI><diagram xmi:id="d"><shape xmi:id="v" modelElement="library.uml#stereotype"/><importedElement href="library.uml#stereotype"/></diagram></xmi:XMI>');
   assert.equal(result.views.find(x => x.id === 'v')?.modelElementScope, 'external');
+  assert.equal(result.statistics.danglingReferences, 0);
+});
+
+test('keeps local missing references distinct from external references with the same fragment', () => {
+  const result = parseSysmlXml(`<xmi:XMI>
+    <diagram xmi:id="d"><shape xmi:id="external" modelElement="library.uml#missing"/>
+      <shape xmi:id="local" modelElement="#missing"/></diagram>
+    <packagedElement xmi:id="r" xmi:type="uml:Dependency" client="library.uml#missing" supplier="#missing"/>
+    <ref href="#missing"/>
+  </xmi:XMI>`);
+  assert.equal(result.views.find(x => x.id === 'external')?.modelElementScope, 'external');
+  assert.equal(result.views.find(x => x.id === 'local')?.modelElementScope, 'unresolved');
+  assert.deepEqual(result.issues.filter(x => x.code === 'DANGLING_REFERENCE').map(x => x.elementId).sort(), ['local', 'r']);
+  assert.ok(result.indexes?.externalReferences.every(x => x.file && x.href !== '#missing'));
+});
+
+test('does not bind explicit external view URIs to local objects with the same ID', () => {
+  const result = parseSysmlXml('<xmi:XMI><packagedElement xmi:id="a" xmi:type="uml:Class"/><diagram xmi:id="d"><shape xmi:id="v" modelElement="library.uml#a"/></diagram></xmi:XMI>');
+  assert.equal(result.views[0].modelElementScope, 'external');
+  assert.equal(result.statistics.danglingReferences, 0);
+});
+
+test('diagnoses missing model references in MagicDraw drawing fileParts', () => {
+  const result = parseSysmlXml(`<xmi:XMI><ownedDiagram xmi:id="d" xmi:type="uml:Diagram">
+    <binaryObject streamContentID="drawing"/></ownedDiagram>
+    <filePart name="drawing"><mdOwnedViews><mdElement xmi:id="v" elementClass="Class">
+    <elementID xmi:idref="missing"/></mdElement></mdOwnedViews></filePart></xmi:XMI>`);
+  assert.equal(result.views[0].modelElementScope, 'unresolved');
+  assert.ok(result.issues.some(x => x.code === 'DANGLING_REFERENCE' && x.viewId === 'v'));
+});
+
+test('extracts typed relationship endpoints from attributes, nested references and owners', () => {
+  const result = parseSysmlXml(`<xmi:XMI>
+    <packagedElement xmi:id="child" xmi:type="uml:Class">
+      <generalization xmi:id="g" xmi:type="uml:Generalization" general="library.uml#parent"/>
+    </packagedElement>
+    <packagedElement xmi:id="use" xmi:type="uml:UseCase">
+      <include xmi:id="i" xmi:type="uml:Include"><addition><ref href="library.uml#included"/></addition></include>
+      <extend xmi:id="e" xmi:type="uml:Extend" extendedCase="library.uml#base"/>
+    </packagedElement>
+    <packagedElement xmi:id="g2" xmi:type="uml:Generalization" specific="child" general="child"/>
+    <packagedElement xmi:id="s" xmi:type="uml:MessageOccurrenceSpecification" covered="lineA"/>
+    <packagedElement xmi:id="r" xmi:type="uml:MessageOccurrenceSpecification" covered="lineB"/>
+    <packagedElement xmi:id="lineA" xmi:type="uml:Lifeline"/>
+    <packagedElement xmi:id="lineB" xmi:type="uml:Lifeline"/>
+    <message xmi:id="m" xmi:type="uml:Message" sendEvent="s"><receiveEvent xmi:idref="r"/></message>
+  </xmi:XMI>`);
+  const endpoints = Object.fromEntries(result.relations.map(x => [x.id, [x.sourceId, x.targetId]]));
+  assert.deepEqual(endpoints, { g: ['child', 'parent'], i: ['use', 'included'], e: ['use', 'base'], g2: ['child', 'child'], m: ['s', 'r'] });
+  assert.equal(result.statistics.danglingReferences, 0);
+});
+
+test('checks every nested endpoint and deduplicates repeated references', () => {
+  const result = parseSysmlXml('<xmi:XMI><packagedElement xmi:id="a" xmi:type="uml:Class"/><packagedElement xmi:id="r" xmi:type="uml:Dependency" client="a"><client>a missing</client><supplier href="lib#missing"/></packagedElement></xmi:XMI>');
+  assert.deepEqual(result.relations[0].sourceIds, ['a', 'missing']);
+  assert.equal(result.statistics.danglingReferences, 1);
 });
 
 test('does not expose generated XML wrappers as semantic owners', () => {
@@ -108,6 +164,86 @@ test('keeps duplicate diagram and view IDs without overwriting the first object'
   assert.equal(result.views.length, 2);
   assert.ok(result.diagrams.some(x => x.id === 'd#duplicate-2'));
   assert.ok(result.views.some(x => x.id === 'v#duplicate-2'));
+  assert.equal(result.views.find(x => x.id === 'v#duplicate-2')?.diagramId, 'd#duplicate-2');
+});
+
+test('keeps duplicate relationships attached to their own nested endpoint nodes', () => {
+  const result = parseSysmlXml('<xmi:XMI><packagedElement xmi:id="a" xmi:type="uml:Class"/><packagedElement xmi:id="b" xmi:type="uml:Class"/><packagedElement xmi:id="r" xmi:type="uml:Dependency"><client xmi:idref="a"/></packagedElement><packagedElement xmi:id="r" xmi:type="uml:Dependency"><client xmi:idref="b"/></packagedElement></xmi:XMI>');
+  assert.deepEqual(result.relations.map(r => r.sourceIds), [['a'], ['b']]);
+});
+
+test('resolves duplicate drawing IDs within their own diagram and preserves semantic edges', () => {
+  const drawing = (stream: string, target: string) => `<filePart name="${stream}"><mdOwnedViews>
+    <mdElement xmi:id="v" elementClass="Class"><elementID xmi:idref="${target}"/></mdElement>
+    <mdElement xmi:id="edge" elementClass="Dependency"><elementID xmi:idref="r"/><linkFirstEndID xmi:idref="v"/><linkSecondEndID xmi:idref="v"/></mdElement>
+    <mdElement xmi:id="link" elementClass="ContainmentLink"><linkFirstEndID xmi:idref="v"/><linkSecondEndID xmi:idref="v"/></mdElement>
+    </mdOwnedViews></filePart>`;
+  const result = parseSysmlXml(`<xmi:XMI><packagedElement xmi:id="a" xmi:type="uml:Class"/><packagedElement xmi:id="b" xmi:type="uml:Class"/>
+    <packagedElement xmi:id="r" xmi:type="uml:Dependency" client="a" supplier="b"/>
+    <ownedDiagram xmi:id="d" xmi:type="uml:Diagram"><binaryObject streamContentID="one"/></ownedDiagram>
+    <ownedDiagram xmi:id="d" xmi:type="uml:Diagram"><binaryObject streamContentID="two"/></ownedDiagram>
+    ${drawing('one', 'a')}${drawing('two', 'b')}</xmi:XMI>`);
+  assert.equal(result.views.length, 6);
+  const secondEdge = result.views.find(v => v.id === 'edge#duplicate-2')!;
+  assert.equal(secondEdge.diagramId, 'd#duplicate-2');
+  assert.equal(secondEdge.sourceViewId, 'v#duplicate-2');
+  assert.equal(secondEdge.modelElementId, 'r');
+  assert.equal(secondEdge.modelElementScope, 'relation');
+  assert.deepEqual(result.relations.filter(r => r.relationOrigin === 'diagram').map(r => r.sourceId), ['a', 'b']);
+  assert.equal(result.issues.filter(i => i.code === 'INVALID_VIEW').length, 0);
+});
+
+test('does not replace a broken semantic edge binding with a generated relation', () => {
+  const result = parseSysmlXml(`<xmi:XMI><packagedElement xmi:id="a" xmi:type="uml:Class"/>
+    <ownedDiagram xmi:id="d" xmi:type="uml:Diagram"><binaryObject streamContentID="s"/></ownedDiagram>
+    <filePart name="s"><mdElement xmi:id="v"><elementID xmi:idref="a"/></mdElement>
+    <mdElement xmi:id="e" elementClass="Transition"><elementID xmi:idref="missing"/>
+    <linkFirstEndID xmi:idref="v"/><linkSecondEndID xmi:idref="v"/></mdElement></filePart></xmi:XMI>`);
+  assert.equal(result.relations.length, 0);
+  assert.equal(result.views.find(v => v.id === 'e')?.modelElementId, 'missing');
+  assert.ok(result.issues.some(i => i.code === 'DANGLING_REFERENCE' && i.viewId === 'e'));
+});
+
+test('maps message occurrences to lifelines without changing event endpoints', () => {
+  const result = parseSysmlXml(`<xmi:XMI>
+    <packagedElement xmi:id="a" xmi:type="uml:Lifeline"/><packagedElement xmi:id="b" xmi:type="uml:Lifeline"/>
+    <packagedElement xmi:id="s" xmi:type="uml:MessageOccurrenceSpecification" covered="a a"/>
+    <packagedElement xmi:id="t" xmi:type="uml:MessageOccurrenceSpecification"><covered><ref xmi:idref="b"/></covered></packagedElement>
+    <packagedElement xmi:id="gate" xmi:type="uml:Gate"/>
+    <message xmi:id="m" xmi:type="uml:Message" sendEvent="s" receiveEvent="t"/>
+    <message xmi:id="g" xmi:type="uml:Message" sendEvent="gate" receiveEvent="library#t"/>
+  </xmi:XMI>`);
+  const message = result.relations.find(r => r.id === 'm')!;
+  assert.equal(message.sourceId, 's');
+  assert.equal(message.targetId, 't');
+  assert.deepEqual(message.sourceLifelineIds, ['a']);
+  assert.deepEqual(message.targetLifelineIds, ['b']);
+  assert.deepEqual(result.relations.find(r => r.id === 'g')?.sourceLifelineIds, []);
+  assert.deepEqual(result.relations.find(r => r.id === 'g')?.targetLifelineIds, []);
+});
+
+test('retains Connector end IDs separately from referenced role IDs', () => {
+  const result = parseSysmlXml(`<xmi:XMI>
+    <packagedElement xmi:id="p1" xmi:type="uml:Property"/><packagedElement xmi:id="p2" xmi:type="uml:Property"/>
+    <packagedElement xmi:id="c" xmi:type="uml:Connector"><end xmi:id="e1"><role href="#p1"/></end><end xmi:id="e2"><role xmi:idref="p2"/></end></packagedElement>
+  </xmi:XMI>`);
+  const connector = result.relations.find(r => r.id === 'c')!;
+  assert.deepEqual(connector.endIds, ['e1', 'e2']);
+  assert.deepEqual(connector.roleIds, ['p1', 'p2']);
+  assert.equal(result.statistics.danglingReferences, 0);
+  assert.equal(result.elements.find(e => e.id === 'e1')?.metaClass, 'uml:ConnectorEnd');
+});
+
+test('recognizes MagicDraw extension metaclasses and legal anonymous nodes', () => {
+  const result = parseSysmlXml(`<xmi:XMI>
+    <packagedElement xmi:id="flow-port" xmi:type="sysml:FlowPort"/>
+    <packagedElement xmi:id="partition" xmi:type="uml:ActivityPartition"/>
+    <packagedElement xmi:id="fork" xmi:type="uml:ForkNode"/>
+    <packagedElement xmi:id="opaque" xmi:type="uml:OpaqueBehavior"/>
+    <packagedElement xmi:id="matrix" xmi:type="DependencyMatrix"/>
+  </xmi:XMI>`);
+  assert.equal(result.issues.filter(x => x.code === 'UNKNOWN_METACLASS').length, 0);
+  assert.equal(result.issues.filter(x => x.code === 'MISSING_NAME').length, 0);
 });
 
 test('preserves unknown extension nodes for downstream diagnostics', () => {
@@ -126,5 +262,5 @@ test('serializes ParsedModel as an importable ES module', () => {
   assert.match(source, /^\/\/ Generated by sysml-parser/);
   assert.match(source, /export const parsedModel = /);
   assert.match(source, /export default parsedModel;/);
-  assert.match(source, /"schemaVersion": "1.1.0"/);
+  assert.match(source, /"schemaVersion": "1.2.0"/);
 });

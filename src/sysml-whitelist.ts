@@ -14,7 +14,8 @@ export const RULE_REQUIRED_METACLASSES = new Set([
   'Activity', 'Action', 'OpaqueAction', 'CallBehaviorAction', 'ControlFlow',
   'InitialNode', 'ActivityFinalNode', 'FlowFinalNode', 'Pseudostate',
   // Sequence diagrams
-  'Interaction', 'Lifeline', 'Message',
+  'Interaction', 'Lifeline', 'Message', 'MessageOccurrenceSpecification',
+  'OccurrenceSpecification', 'ExecutionOccurrenceSpecification', 'Gate',
   // State-machine diagrams
   'StateMachine', 'State', 'Transition',
   // Requirement and package diagrams are not rule-specific today, but are
@@ -48,5 +49,6 @@ const diagramTypeAliases: Record<string, string> = {
 
 export function canonicalDiagramType(value?: string): string | undefined {
   if (!value) return undefined;
-  return diagramTypeAliases[value.trim().toLowerCase()] ?? value;
+  const key = value.trim().replace(/\s+/g, ' ').toLowerCase();
+  return diagramTypeAliases[key] ?? diagramTypeAliases[key.replace(/^sysml\s+/, '')] ?? value;
 }

@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xmi:XMI xmlns:xmi="http://www.omg.org/spec/XMI/20131001"
+         xmlns:uml="http://www.omg.org/spec/UML/20131001"
+         xmlns:Requirements="urn:example:requirements">
+  <uml:Model xmi:id="details" name="SemanticDetails">
+    <!-- BDD: classifier references, multiplicity and direct UML type tags. -->
+    <uml:Class xmi:id="motor" name="Motor"/>
+    <packagedElement xmi:type="uml:Class" xmi:id="system" name="System">
+      <ownedAttribute xmi:id="motors" name="motors">
+        <type xmi:idref="motor"/>
+        <lowerValue xmi:type="uml:LiteralInteger" xmi:id="lower" value="0"/>
+        <upperValue xmi:type="uml:LiteralUnlimitedNatural" xmi:id="upper" value="*"/>
+      </ownedAttribute>
+      <!-- IBD/PAR: original ConnectorEnd records retain endpoint pairing. -->
+      <ownedConnector xmi:id="binding">
+        <end xmi:id="end-a"><role xmi:idref="motors"/></end>
+        <end xmi:id="end-b" role="motors" partWithPort="motors"/>
+      </ownedConnector>
+    </packagedElement>
+    <packagedElement xmi:type="uml:Association" xmi:id="association" memberEnd="assoc-a assoc-b">
+      <ownedEnd xmi:id="assoc-a"><type xmi:idref="motor"/></ownedEnd>
+      <ownedEnd xmi:id="assoc-b"><type href="types.uml#ExternalType"/></ownedEnd>
+    </packagedElement>
+
+    <!-- REQ: base references and string-valued tags serialized as children. -->
+    <packagedElement xmi:type="uml:Class" xmi:id="requirement" name="Capacity"/>
+
+    <!-- PAR: ordered expression bodies/languages must keep lexical strings. -->
+    <packagedElement xmi:type="uml:Constraint" xmi:id="formula" name="CapacityFormula">
+      <constrainedElement xmi:idref="motors"/>
+      <specification xmi:type="uml:OpaqueExpression" xmi:id="expression">
+        <body>001</body><language>Text</language>
+        <body><![CDATA[count < 5 && enabled]]></body><language>OCL</language>
+      </specification>
+    </packagedElement>
+
+    <!-- ACT: a guard owns its constraint references and expression. -->
+    <packagedElement xmi:type="uml:Activity" xmi:id="activity" name="Control">
+      <node xmi:type="uml:InitialNode" xmi:id="initial"/>
+      <node xmi:type="uml:ActivityFinalNode" xmi:id="final"/>
+      <edge xmi:type="uml:ControlFlow" xmi:id="flow" source="initial" target="final">
+        <guard xmi:id="flow-guard">
+          <specification xmi:type="uml:OpaqueExpression" xmi:id="flow-expression">
+            <body>true</body><language>OCL</language>
+          </specification>
+        </guard>
+      </edge>
+    </packagedElement>
+
+    <!-- STM: trigger/event and transition/effect are separate owned features. -->
+    <packagedElement xmi:type="uml:StateMachine" xmi:id="sm" name="Machine">
+      <region xmi:id="region">
+        <subvertex xmi:type="uml:State" xmi:id="idle" name="Idle"/>
+        <subvertex xmi:type="uml:FinalState" xmi:id="done"/>
+        <transition xmi:id="transition" source="idle" target="done">
+          <trigger xmi:id="trigger"><event href="events.uml#StartEvent"/></trigger>
+          <effect xmi:type="uml:OpaqueBehavior" xmi:id="effect">
+            <body>stopMotor()</body><language>JavaScript</language>
+          </effect>
+        </transition>
+      </region>
+    </packagedElement>
+
+    <!-- UC: extension location is not the Extend relationship's target case. -->
+    <packagedElement xmi:type="uml:UseCase" xmi:id="base-case" name="Operate">
+      <extensionPoint xmi:id="point" name="BeforeStart"/>
+    </packagedElement>
+    <packagedElement xmi:type="uml:UseCase" xmi:id="extension-case" name="Check">
+      <extend xmi:id="extend" extendedCase="base-case" extensionLocation="point"/>
+    </packagedElement>
+
+    <!-- SEQ: represented part, combined-fragment operand and execution interval. -->
+    <packagedElement xmi:type="uml:Interaction" xmi:id="interaction" name="Sequence">
+      <lifeline xmi:id="line" name="motor"><represents xmi:idref="motors"/></lifeline>
+      <fragment xmi:type="uml:MessageOccurrenceSpecification" xmi:id="start" covered="line"/>
+      <fragment xmi:type="uml:ExecutionOccurrenceSpecification" xmi:id="finish" covered="line"/>
+      <fragment xmi:type="uml:BehaviorExecutionSpecification" xmi:id="execution"
+                covered="line" start="start" finish="finish"/>
+      <fragment xmi:type="uml:CombinedFragment" xmi:id="alt" interactionOperator="alt">
+        <operand xmi:id="operand">
+          <guard xmi:type="uml:InteractionConstraint" xmi:id="interaction-guard">
+            <specification xmi:type="uml:OpaqueExpression" xmi:id="interaction-expression">
+              <body>ready</body><language>OCL</language>
+            </specification>
+          </guard>
+        </operand>
+      </fragment>
+    </packagedElement>
+
+    <!-- PKG: external import remains an external URI in feature references. -->
+    <packageImport xmi:id="package-import" importedPackage="library.uml#Library"/>
+  </uml:Model>
+  <Requirements:Requirement xmi:id="requirement-app">
+    <base_Class><ref xmi:idref="requirement"/></base_Class>
+    <Id>0007</Id>
+    <Text>  At most five motors.  </Text>
+  </Requirements:Requirement>
+</xmi:XMI>
